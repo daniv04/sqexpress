@@ -22,6 +22,9 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'phone',
+        'locker_code',
+        'active',
     ];
 
     /**
@@ -44,6 +47,17 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'active' => 'boolean',
         ];
+    }
+
+    public function packages()
+    {
+        return $this->hasMany(Package::class);
+    }
+
+    public function packageStatusChanges()
+    {
+        return $this->hasMany(PackageStatusHistory::class, 'changed_by');
     }
 }

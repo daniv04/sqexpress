@@ -16,19 +16,27 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // Crear usuario Admin
-        User::factory()->create([
-            'name' => 'Admin User',
+        User::firstOrCreate([
             'email' => 'admin@example.com',
+        ], [
+            'name' => 'Admin User',
             'password' => bcrypt('password'),
             'role' => 'admin',
+            'locker_code' => 'LKADMIN01',
         ]);
 
         // Crear usuario regular
-        User::factory()->create([
-            'name' => 'Test User',
+        User::firstOrCreate([
             'email' => 'user@example.com',
+        ], [
+            'name' => 'Test User',
             'password' => bcrypt('password'),
             'role' => 'user',
+            'locker_code' => 'LKUSER001',
+        ]);
+
+        $this->call([
+            PackageDemoSeeder::class,
         ]);
     }
 }
