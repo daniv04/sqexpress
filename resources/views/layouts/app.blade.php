@@ -29,6 +29,36 @@
 
             <!-- Page Content -->
             <main>
+                @if (session('success'))
+                    <div
+                        x-data="{ show: true }"
+                        x-init="setTimeout(() => show = false, 3500)"
+                        x-show="show"
+                        x-transition
+                        class="fixed top-5 right-5 z-50"
+                        style="display: none;"
+                    >
+                        <div class="bg-green-100 border border-green-300 text-green-800 px-4 py-3 rounded-md shadow-lg dark:bg-green-900/30 dark:border-green-700 dark:text-green-200">
+                            {{ session('success') }}
+                        </div>
+                    </div>
+                @endif
+
+                @if (session('error'))
+                    <div
+                        x-data="{ show: true }"
+                        x-init="setTimeout(() => show = false, 3500)"
+                        x-show="show"
+                        x-transition
+                        class="fixed top-5 right-5 z-50"
+                        style="display: none;"
+                    >
+                        <div class="bg-red-100 border border-red-300 text-red-800 px-4 py-3 rounded-md shadow-lg dark:bg-red-900/30 dark:border-red-700 dark:text-red-200">
+                            {{ session('error') }}
+                        </div>
+                    </div>
+                @endif
+
                 {{ $slot }}
             </main>
         </div>
