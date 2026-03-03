@@ -13,7 +13,7 @@
         @csrf
     </form>
 
-    <form method="post" action="{{ route('profile.update') }}" class="mt-6 space-y-6">
+    <form method="post" action="{{ route('profile.update') }}" class="mt-6 space-y-6" x-data="locationSelector()">
         @csrf
         @method('patch')
 
@@ -64,9 +64,45 @@
             <x-text-input id="cedula" name="cedula" type="text" class="mt-1 block w-full" :value="old('cedula', $user->cedula)" autocomplete="cedula" />
             <x-input-error class="mt-2" :messages="$errors->get('cedula')" />
         </div>
+        
+        <!-- Provincia -->
+        <div>
+            <x-input-label for="provincia_id" :value="__('Provincia')" />
+            <select id="provincia_id" name="provincia_id" x-model="provinciaId" @change="loadCantones" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm">
+                <option value="">Seleccione una provincia</option>
+                <template x-for="provincia in provincias" :key="provincia.id">
+                    <option :value="provincia.id" x-text="provincia.nombre"></option>
+                </template>
+            </select>
+            <x-input-error class="mt-2" :messages="$errors->get('provincia_id')" />
+        </div>
+
+        <!-- Canton -->
+        <div>
+            <x-input-label for="canton_id" :value="__('Cantón')" />
+            <select id="canton_id" name="canton_id" x-model="cantonId" @change="loadDistritos" :disabled="!provinciaId" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm disabled:opacity-50">
+                <option value="">Seleccione un cantón</option>
+                <template x-for="canton in cantones" :key="canton.id">
+                    <option :value="canton.id" x-text="canton.nombre"></option>
+                </template>
+            </select>
+            <x-input-error class="mt-2" :messages="$errors->get('canton_id')" />
+        </div>
+
+        <!-- Distrito -->
+        <div>
+            <x-input-label for="distrito_id" :value="__('Distrito')" />
+            <select id="distrito_id" name="distrito_id" x-model="distritoId" :disabled="!cantonId" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm disabled:opacity-50">
+                <option value="">Seleccione un distrito</option>
+                <template x-for="distrito in distritos" :key="distrito.id">
+                    <option :value="distrito.id" x-text="distrito.nombre"></option>
+                </template>
+            </select>
+            <x-input-error class="mt-2" :messages="$errors->get('distrito_id')" />
+        </div>
 
         <div>
-            <x-input-label for="address" :value="__('Dirección')" />
+            <x-input-label for="address" :value="__('Dirección Exacta')" />
             <textarea id="address" name="address" rows="3" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm">{{ old('address', $user->address) }}</textarea>
             <x-input-error class="mt-2" :messages="$errors->get('address')" />
         </div>
@@ -85,4 +121,64 @@
             @endif
         </div>
     </form>
+
+    <script>
+        function locationSelector() {
+            return {
+                provinciaId: parseInt('{{ old("provincia_id", $user->provincia_id ?? 0) }}') || '',
+                cantonId: parseInt('{{ old("canton_id", $user->canton_id ?? 0) }}') || '',
+                distritoId: parseInt('{{ old("distrito_id", $user->distrito_id ?? 0) }}') || '',
+                provincias: [],
+                cantones: [],
+                distritos: [],
+
+                async init() {
+                    await this.loadProvincias();
+                    if (this.provinciaId) {
+                        await this.loadCantones();
+                        if (this.cantonId) {
+                            await this.loadDistritos();
+                        }
+                    }
+                },
+
+                async loadProvincias() {
+                    const response = await fetch('/api/provincias');
+                    this.provincias = await response.json();
+                },
+
+                async loadCantones() {
+                    this.cantonId = '';
+                    this.distritoId = '';
+                    this.cantones = [];
+                    this.distritos = [];
+                    
+                    if (!this.provinciaId) return;
+                    
+                    const response = await fetch(`/api/provincias/${this.provinciaId}/cantones`);
+                    this.cantones = await response.json();
+                    
+                    const savedCantonId = parseInt('{{ old("canton_id", $user->canton_id ?? 0) }}');
+                    if (savedCantonId && this.provinciaId === parseInt('{{ old("provincia_id", $user->provincia_id ?? 0) }}')) {
+                        this.cantonId = savedCantonId;
+                    }
+                },
+
+                async loadDistritos() {
+                    this.distritoId = '';
+                    this.distritos = [];
+                    
+                    if (!this.cantonId) return;
+                    
+                    const response = await fetch(`/api/cantones/${this.cantonId}/distritos`);
+                    this.distritos = await response.json();
+                    
+                    const savedDistritoId = parseInt('{{ old("distrito_id", $user->distrito_id ?? 0) }}');
+                    if (savedDistritoId && this.cantonId === parseInt('{{ old("canton_id", $user->canton_id ?? 0) }}')) {
+                        this.distritoId = savedDistritoId;
+                    }
+                }
+            }
+        }
+    </script>
 </section>

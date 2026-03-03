@@ -29,6 +29,9 @@ class User extends Authenticatable
         'phone',
         'cedula',
         'address',
+            'provincia_id',
+            'canton_id',
+            'distrito_id',
         'locker_code',
         'active',
     ];
@@ -65,5 +68,20 @@ class User extends Authenticatable
     public function packageStatusChanges(): HasMany
     {
         return $this->hasMany(PackageStatusHistory::class, 'changed_by');
+    }
+
+    public function provincia()
+    {
+        return $this->belongsTo(Provincia::class);
+    }
+
+    public function canton()
+    {
+        return $this->belongsTo(Canton::class);
+    }
+
+    public function distrito()
+    {
+        return $this->belongsTo(Distrito::class);
     }
 }

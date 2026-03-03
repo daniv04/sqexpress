@@ -26,6 +26,9 @@ class ProfileUpdateRequest extends FormRequest
                 Rule::unique(User::class)->ignore($this->user()->id),
             ],
             'cedula' => ['nullable', 'string', 'max:50'],
+                        'provincia_id' => ['nullable', 'exists:provincias,id'],
+                        'canton_id' => ['nullable', 'exists:cantones,id'],
+                        'distrito_id' => ['nullable', 'exists:distritos,id'],
             'address' => ['nullable', 'string', 'max:500'],
         ];
     }

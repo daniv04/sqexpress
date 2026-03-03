@@ -34,6 +34,9 @@ class RegisteredUserController extends Controller
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'phone' => ['required', 'string', 'regex:/^[0-9\s\-\+\(\)]+$/', 'min:7', 'max:20'],
             'cedula' => ['required', 'string', 'max:50'],
+                        'provincia_id' => ['required', 'exists:provincias,id'],
+                        'canton_id' => ['required', 'exists:cantones,id'],
+                        'distrito_id' => ['required', 'exists:distritos,id'],
             'address' => ['required', 'string', 'max:500'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
@@ -46,6 +49,9 @@ class RegisteredUserController extends Controller
             'email' => $request->email,
             'phone' => $request->phone,
             'cedula' => $request->cedula,
+                        'provincia_id' => $request->provincia_id,
+                        'canton_id' => $request->canton_id,
+                        'distrito_id' => $request->distrito_id,
             'address' => $request->address,
             'locker_code' => $lockerCode,
             'role' => 'user', // Set default role as user

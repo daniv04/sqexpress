@@ -3,6 +3,7 @@
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PackageController;
 use App\Http\Controllers\PanelController;
+use App\Http\Controllers\Api\GeodataController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -43,6 +44,13 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::patch('/profile/phone', [ProfileController::class, 'updatePhone'])->name('profile.update-phone');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
+
+// API Routes para Geodata
+Route::prefix('api')->group(function () {
+    Route::get('/provincias', [GeodataController::class, 'getProvincias']);
+    Route::get('/provincias/{provinciaId}/cantones', [GeodataController::class, 'getCantones']);
+    Route::get('/cantones/{cantonId}/distritos', [GeodataController::class, 'getDistritos']);
 });
 
 require __DIR__.'/auth.php';
