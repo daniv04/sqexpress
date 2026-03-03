@@ -38,6 +38,18 @@ class ProfileController extends Controller
     }
 
     /**
+     * Update the user's phone number.
+     */
+    public function updatePhone(\App\Http\Requests\UpdatePhoneRequest $request): RedirectResponse
+    {
+        $request->user()->update([
+            'phone' => $request->validated()['phone'],
+        ]);
+
+        return Redirect::route('profile.edit')->with('status', 'phone-updated')->with('success', 'Número de teléfono actualizado exitosamente.');
+    }
+
+    /**
      * Delete the user's account.
      */
     public function destroy(Request $request): RedirectResponse

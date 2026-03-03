@@ -47,6 +47,30 @@
             @endif
         </div>
 
+        <div>
+            <x-input-label for="locker_code" :value="__('Número de Casillero')" />
+            <div class="mt-1 px-4 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm">
+                <p class="text-sm font-medium text-gray-900 dark:text-gray-100 font-mono">
+                    {{ $user->locker_code ?? 'No asignado' }}
+                </p>
+            </div>
+            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                Este es tu número de casillero asignado por el sistema.
+            </p>
+        </div>
+
+        <div>
+            <x-input-label for="cedula" :value="__('Cédula')" />
+            <x-text-input id="cedula" name="cedula" type="text" class="mt-1 block w-full" :value="old('cedula', $user->cedula)" autocomplete="cedula" />
+            <x-input-error class="mt-2" :messages="$errors->get('cedula')" />
+        </div>
+
+        <div>
+            <x-input-label for="address" :value="__('Dirección')" />
+            <textarea id="address" name="address" rows="3" class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm">{{ old('address', $user->address) }}</textarea>
+            <x-input-error class="mt-2" :messages="$errors->get('address')" />
+        </div>
+
         <div class="flex items-center gap-4">
             <x-primary-button>{{ __('Save') }}</x-primary-button>
 

@@ -4,9 +4,13 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
+/**
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Package[] $packages
+ */
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
@@ -23,6 +27,8 @@ class User extends Authenticatable
         'password',
         'role',
         'phone',
+        'cedula',
+        'address',
         'locker_code',
         'active',
     ];
@@ -51,12 +57,12 @@ class User extends Authenticatable
         ];
     }
 
-    public function packages()
+    public function packages(): HasMany
     {
         return $this->hasMany(Package::class);
     }
 
-    public function packageStatusChanges()
+    public function packageStatusChanges(): HasMany
     {
         return $this->hasMany(PackageStatusHistory::class, 'changed_by');
     }

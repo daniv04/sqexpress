@@ -32,12 +32,23 @@ class RegisteredUserController extends Controller
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
+            'phone' => ['required', 'string', 'regex:/^[0-9\s\-\+\(\)]+$/', 'min:7', 'max:20'],
+            'cedula' => ['required', 'string', 'max:50'],
+            'address' => ['required', 'string', 'max:500'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
+
+        // Generate unique locker code
+        $lockerCode = $this->generateUniqueLockerCode();
 
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
+            'phone' => $request->phone,
+            'cedula' => $request->cedula,
+            'address' => $request->address,
+            'locker_code' => $lockerCode,
+            'role' => 'user', // Set default role as user
             'password' => Hash::make($request->password),
         ]);
 
@@ -45,6 +56,19 @@ class RegisteredUserController extends Controller
 
         Auth::login($user);
 
-        return redirect(route('dashboard', absolute: false));
+        return redirect(route('panel', absolute: false));
+    }
+
+    /**
+     * Generate a unique locker code.
+     */
+    private function generateUniqueLockerCode(): string
+    {
+        do {
+            // Generate format: SQE-XXXX (e.g., SQE-1234)
+            $code = 'SQE-' . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT);
+        } while (User::where('locker_code', $code)->exists());
+
+        return $code;
     }
 }

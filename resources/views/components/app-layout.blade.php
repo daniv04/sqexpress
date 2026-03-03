@@ -1,5 +1,7 @@
+@props(['header' => null])
+
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" x-data="themeToggle()" @load="init()">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -13,27 +15,9 @@
 
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
-
-        <script>
-            function themeToggle() {
-                return {
-                    isDark: localStorage.getItem('theme') === 'dark' || 
-                            (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches),
-                    toggleTheme() {
-                        this.isDark = !this.isDark;
-                        localStorage.setItem('theme', this.isDark ? 'dark' : 'light');
-                        document.documentElement.classList.toggle('dark', this.isDark);
-                        document.dispatchEvent(new CustomEvent('theme-changed', { detail: { isDark: this.isDark } }));
-                    },
-                    init() {
-                        document.documentElement.classList.toggle('dark', this.isDark);
-                    }
-                }
-            }
-        </script>
     </head>
-    <body class="font-sans antialiased" :class="{ 'dark': isDark }">
-        <div class="min-h-screen bg-gray-100 dark:bg-gray-900" :class="{ 'dark': isDark }">
+    <body class="font-sans antialiased">
+        <div class="min-h-screen bg-gray-100 dark:bg-gray-900" {{ $attributes }}>
             @include('layouts.navigation')
 
             <!-- Page Heading -->
