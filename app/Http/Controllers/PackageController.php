@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\ShippingMethod;
 use App\Http\Requests\StorePackageRequest;
 use App\Http\Requests\UpdatePackageRequest;
+use App\Events\PackagePrealerted;
 use App\Services\DbService\PackageService;
 
 class PackageController extends Controller
@@ -28,6 +29,8 @@ class PackageController extends Controller
 
             
             $this->dbService->createFirstStatusHistory($package->id);
+
+            PackagePrealerted::dispatch($package);
 
             return redirect()->route('mis-paquetes')->with('success', 'Paquete creado exitosamente.');
             

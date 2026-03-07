@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\DbService\LockerCodeService;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -14,6 +15,13 @@ use Illuminate\View\View;
 
 class RegisteredUserController extends Controller
 {
+    protected $lockerCodeService;
+
+    public function __construct(LockerCodeService $lockerCodeService)
+    {
+       $this->lockerCodeService = $lockerCodeService;
+    }
+
     /**
      * Display the registration view.
      */
@@ -42,7 +50,7 @@ class RegisteredUserController extends Controller
         ]);
 
         // Generate unique locker code
-        $lockerCode = $this->generateUniqueLockerCode();
+        $lockerCode = $this->lockerCodeService->generateNextLockerCode();
 
         $user = User::create([
             'name' => $request->name,
@@ -54,7 +62,7 @@ class RegisteredUserController extends Controller
                         'distrito_id' => $request->distrito_id,
             'address' => $request->address,
             'locker_code' => $lockerCode,
-            'role' => 'user', // Set default role as user
+            'role' => 'user', 
             'password' => Hash::make($request->password),
         ]);
 
@@ -63,18 +71,5 @@ class RegisteredUserController extends Controller
         Auth::login($user);
 
         return redirect(route('panel', absolute: false));
-    }
-
-    /**
-     * Generate a unique locker code.
-     */
-    private function generateUniqueLockerCode(): string
-    {
-        do {
-            // Generate format: SQE-XXXX (e.g., SQE-1234)
-            $code = 'SQE-' . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT);
-        } while (User::where('locker_code', $code)->exists());
-
-        return $code;
     }
 }

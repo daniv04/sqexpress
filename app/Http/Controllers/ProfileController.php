@@ -16,8 +16,10 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): View
     {
+        $user= $request->user()->load(['provincia', 'canton', 'distrito']);
+        //dd($user->getAttributes());
         return view('profile.edit', [
-            'user' => $request->user(),
+            'user' => $user,
         ]);
     }
 
@@ -35,18 +37,6 @@ class ProfileController extends Controller
         $request->user()->save();
 
         return Redirect::route('profile.edit')->with('status', 'profile-updated');
-    }
-
-    /**
-     * Update the user's phone number.
-     */
-    public function updatePhone(\App\Http\Requests\UpdatePhoneRequest $request): RedirectResponse
-    {
-        $request->user()->update([
-            'phone' => $request->validated()['phone'],
-        ]);
-
-        return Redirect::route('profile.edit')->with('status', 'phone-updated')->with('success', 'Número de teléfono actualizado exitosamente.');
     }
 
     /**
