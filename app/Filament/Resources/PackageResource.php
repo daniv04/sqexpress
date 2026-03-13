@@ -8,6 +8,7 @@ use App\Models\Package;
 use App\Models\ShippingMethod;
 use App\Services\DbService\PackageService;
 use DomainException;
+use Illuminate\Support\Facades\Auth;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
@@ -183,7 +184,7 @@ class PackageResource extends Resource
                             $service->updatePackageStatus(
                                 package: $record,
                                 newStatus: $data['new_status'],
-                                changedBy: auth()->id(),
+                                changedBy: Auth::id(),
                                 note: $data['note'] ?? null,
                                 shelfLocation: $data['shelf_location'] ?? null,
                             );
