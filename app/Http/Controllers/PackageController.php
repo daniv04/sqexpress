@@ -99,10 +99,7 @@ class PackageController extends Controller
      */
     public function show(Package $package)
     {
-        // Verificar que el paquete pertenece al usuario autenticado
-        if ($package->user_id !== Auth::id() && Auth::user()->role !== 'admin') {
-            abort(403, 'No tienes permiso para ver este paquete.');
-        }
+        $this->authorize('view', $package);
 
         $package->load(['shippingMethod', 'statusHistories.changedBy', 'user']);
 
@@ -127,15 +124,7 @@ class PackageController extends Controller
      */
     public function edit(Package $package)
     {
-        // Verificar que el paquete pertenece al usuario autenticado
-        if ($package->user_id !== Auth::id() && Auth::user()->role !== 'admin') {
-            abort(403, 'No tienes permiso para editar este paquete.');
-        }
-
-        // Verificar que el paquete está en estado prealerted
-        if ($package->status !== 'prealerted') {
-            abort(403, 'Solo se pueden editar paquetes prealertados.');
-        }
+        $this->authorize('update', $package);
 
         $shippingMethods = ShippingMethod::where('active', true)->get();
 
@@ -148,15 +137,7 @@ class PackageController extends Controller
     public function update(UpdatePackageRequest $request, Package $package)
     {
         try {
-            // Verificar que el paquete está en estado prealerted
-            if ($package->status !== 'prealerted') {
-                return redirect()->back()->with('error', 'Solo se pueden editar paquetes prealertados.');
-            }
-
-            // Verificar que pertenece al usuario
-            if ($package->user_id !== Auth::id()) {
-                abort(403, 'No tienes permiso para editar este paquete.');
-            }
+            $this->authorize('update', $package);
 
             $package->update($request->validated());
 
@@ -173,15 +154,7 @@ class PackageController extends Controller
     public function destroy(Package $package)
     {
         try {
-            // Verificar que el paquete está en estado prealerted
-            if ($package->status !== 'prealerted') {
-                return redirect()->back()->with('error', 'Solo se pueden eliminar paquetes prealertados.');
-            }
-
-            // Verificar que pertenece al usuario
-            if ($package->user_id !== Auth::id()) {
-                abort(403, 'No tienes permiso para eliminar este paquete.');
-            }
+            $this->authorize('delete', $package);
 
             $package->delete();
 
