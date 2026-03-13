@@ -170,9 +170,9 @@
     <script>
         function locationSelector() {
             return {
-                provinciaId: '{{ old('provincia_id', $user->provincia_id ?? '') }}',
-                cantonId: '{{ old('canton_id', $user->canton_id ?? '') }}',
-                distritoId: '{{ old('distrito_id', $user->distrito_id ?? '') }}',
+                provinciaId: '{{ old("provincia_id", $user->provincia_id ?? "") }}',
+                cantonId: '{{ old("canton_id", $user->canton_id ?? "") }}',
+                distritoId: '{{ old("distrito_id", $user->distrito_id ?? "") }}',
                 cantones: [],
                 distritos: [],
 
