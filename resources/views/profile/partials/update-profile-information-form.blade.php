@@ -80,6 +80,24 @@
             </div>
         </div>
 
+        <!-- Current Location Display - 3 Columns (Read-only) -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700">
+            <div>
+                <p class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('Provincia Guardada') }}</p>
+                <p class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ $user->provincia->nombre ?? __('No asignada') }}</p>
+            </div>
+
+            <div>
+                <p class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('Cantón Guardado') }}</p>
+                <p class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ $user->canton->nombre ?? __('No asignado') }}</p>
+            </div>
+
+            <div>
+                <p class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('Distrito Guardado') }}</p>
+                <p class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ $user->distrito->nombre ?? __('No asignado') }}</p>
+            </div>
+        </div>
+
         <!-- Provincia, Canton, Distrito - 3 Columns -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
             <div>
