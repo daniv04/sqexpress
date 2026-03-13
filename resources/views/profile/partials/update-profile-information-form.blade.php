@@ -79,52 +79,52 @@
                 <x-input-error class="mt-2" :messages="$errors->get('cedula')" />
             </div>
         </div>
-        
-        <!-- Provincia, Canton, Distrito - 3 Columns 
+
+        <!-- Provincia, Canton, Distrito - 3 Columns -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
             <div>
-            <x-input-label for="provincia_id" :value="__('Provincia')" />
-            <select id="provincia_id" name="provincia_id"
-                    x-model="provinciaId"
-                    @change="loadCantones()"
-                    class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm">
-                <option value="">Seleccione una provincia</option>
-                <template x-for="provincia in provincias" :key="provincia.id">
-                    <option :value="provincia.id" x-text="provincia.nombre"></option>
-                </template>
-            </select>
-            <x-input-error class="mt-2" :messages="$errors->get('provincia_id')" />
-        </div>
+                <x-input-label for="provincia_id" :value="__('Provincia')" />
+                <select id="provincia_id" name="provincia_id"
+                        x-model="provinciaId"
+                        @change="loadCantones()"
+                        class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm">
+                    <option value="">Seleccione una provincia</option>
+                    @foreach($provincias as $provincia)
+                        <option value="{{ $provincia->id }}">{{ $provincia->nombre }}</option>
+                    @endforeach
+                </select>
+                <x-input-error class="mt-2" :messages="$errors->get('provincia_id')" />
+            </div>
 
-        <div>
-            <x-input-label for="canton_id" :value="__('Cantón')" />
-            <select id="canton_id" name="canton_id"
-                    x-model="cantonId"
-                    @change="loadDistritos()"
-                    :disabled="!provinciaId"
-                    class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm disabled:opacity-50">
-                <option value="">Seleccione un cantón</option>
-                <template x-for="canton in cantones" :key="canton.id">
-                    <option :value="canton.id" x-text="canton.nombre"></option>
-                </template>
-            </select>
-            <x-input-error class="mt-2" :messages="$errors->get('canton_id')" />
-        </div>
+            <div>
+                <x-input-label for="canton_id" :value="__('Cantón')" />
+                <select id="canton_id" name="canton_id"
+                        x-model="cantonId"
+                        @change="loadDistritos()"
+                        :disabled="!provinciaId"
+                        class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm disabled:opacity-50">
+                    <option value="">Seleccione un cantón</option>
+                    <template x-for="canton in cantones" :key="canton.id">
+                        <option :value="canton.id" x-text="canton.nombre"></option>
+                    </template>
+                </select>
+                <x-input-error class="mt-2" :messages="$errors->get('canton_id')" />
+            </div>
 
-        <div>
-            <x-input-label for="distrito_id" :value="__('Distrito')" />
-            <select id="distrito_id" name="distrito_id"
-                    x-model="distritoId"
-                    :disabled="!cantonId"
-                    class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm disabled:opacity-50">
-                <option value="">Seleccione un distrito</option>
-                <template x-for="distrito in distritos" :key="distrito.id">
-                    <option :value="distrito.id" x-text="distrito.nombre"></option>
-                </template>
-            </select>
-            <x-input-error class="mt-2" :messages="$errors->get('distrito_id')" />
+            <div>
+                <x-input-label for="distrito_id" :value="__('Distrito')" />
+                <select id="distrito_id" name="distrito_id"
+                        x-model="distritoId"
+                        :disabled="!cantonId"
+                        class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm disabled:opacity-50">
+                    <option value="">Seleccione un distrito</option>
+                    <template x-for="distrito in distritos" :key="distrito.id">
+                        <option :value="distrito.id" x-text="distrito.nombre"></option>
+                    </template>
+                </select>
+                <x-input-error class="mt-2" :messages="$errors->get('distrito_id')" />
+            </div>
         </div>
-        </div>-->
 
         <!-- Address -->
         <div class="mb-6">
@@ -149,5 +149,49 @@
         </div>
     </form>
 
-  
+    <script>
+        function locationSelector() {
+            return {
+                provinciaId: '{{ old('provincia_id', $user->provincia_id ?? '') }}',
+                cantonId: '{{ old('canton_id', $user->canton_id ?? '') }}',
+                distritoId: '{{ old('distrito_id', $user->distrito_id ?? '') }}',
+                cantones: [],
+                distritos: [],
+
+                async init() {
+                    const savedCanton = this.cantonId;
+                    const savedDistrito = this.distritoId;
+
+                    if (this.provinciaId) {
+                        const res = await fetch(`/api/provincias/${this.provinciaId}/cantones`);
+                        this.cantones = await res.json();
+                        this.cantonId = savedCanton;
+                    }
+                    if (this.cantonId) {
+                        const res = await fetch(`/api/cantones/${this.cantonId}/distritos`);
+                        this.distritos = await res.json();
+                        this.distritoId = savedDistrito;
+                    }
+                },
+
+                async loadCantones() {
+                    this.cantonId = '';
+                    this.distritoId = '';
+                    this.cantones = [];
+                    this.distritos = [];
+                    if (!this.provinciaId) return;
+                    const res = await fetch(`/api/provincias/${this.provinciaId}/cantones`);
+                    this.cantones = await res.json();
+                },
+
+                async loadDistritos() {
+                    this.distritoId = '';
+                    this.distritos = [];
+                    if (!this.cantonId) return;
+                    const res = await fetch(`/api/cantones/${this.cantonId}/distritos`);
+                    this.distritos = await res.json();
+                },
+            }
+        }
+    </script>
 </section>
