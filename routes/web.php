@@ -10,10 +10,6 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified', 'isAdmin'])->name('dashboard');
-
 Route::get('/panel', [PanelController::class, 'index'])
     ->middleware(['auth', 'verified'])->name('panel');
 

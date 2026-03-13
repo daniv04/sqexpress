@@ -36,6 +36,7 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $this->call([
+            ShippingMethodSeeder::class,
             PackageDemoSeeder::class,
         ]);
     }

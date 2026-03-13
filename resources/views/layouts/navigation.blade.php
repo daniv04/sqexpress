@@ -5,18 +5,14 @@
             <div class="flex">
                 <!-- Logo -->
                 <div class="shrink-0 flex items-center">
-                    <a href="{{ Auth::user()->role === 'admin' ? route('dashboard') : route('panel') }}">
+                    <a href="{{ Auth::user()->role === 'admin' ? '/admin' : route('panel') }}">
                         <x-application-logo class="block h-9 w-auto fill-current text-gray-800 dark:text-gray-200" />
                     </a>
                 </div>
 
                 <!-- Navigation Links -->
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                    @if (Auth::user()->role === 'admin')
-                        <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-                            {{ __('Dashboard') }}
-                        </x-nav-link>
-                    @else
+                    @if (Auth::user()->role !== 'admin')
                         <x-nav-link :href="route('panel')" :active="request()->routeIs('panel')">
                             {{ __('Panel') }}
                         </x-nav-link>
@@ -51,6 +47,12 @@
                             {{ __('Profile') }}
                         </x-dropdown-link>
 
+                        @if (Auth::user()->role === 'admin')
+                            <x-dropdown-link href="/admin">
+                                {{ __('Panel Admin') }}
+                            </x-dropdown-link>
+                        @endif
+
                         <!-- Authentication -->
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
@@ -78,11 +80,7 @@
     <!-- Responsive Navigation Menu -->
     <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
         <div class="pt-2 pb-3 space-y-1">
-            @if (Auth::user()->role === 'admin')
-                <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-                    {{ __('Dashboard') }}
-                </x-responsive-nav-link>
-            @else
+            @if (Auth::user()->role !== 'admin')
                 <x-responsive-nav-link :href="route('panel')" :active="request()->routeIs('panel')">
                     {{ __('Panel') }}
                 </x-responsive-nav-link>
