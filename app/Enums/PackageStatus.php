@@ -13,6 +13,20 @@ enum PackageStatus: string
     case DELIVERED = 'delivered';
     case CANCELED = 'canceled';
 
+    public function label(): string
+    {
+        return match ($this) {
+            self::PREALERTED            => 'Prealertado',
+            self::RECEIVED_IN_WAREHOUSE => 'Recibido en Bodega',
+            self::ASSIGNED_FLIGHT       => 'Vuelo Asignado',
+            self::RECEIVED_IN_CUSTOMS   => 'Recibido en Aduana',
+            self::RECEIVED_IN_BUSINESS  => 'Recibido en Oficina',
+            self::READY_TO_DELIVER      => 'Listo para Entregar',
+            self::DELIVERED             => 'Entregado',
+            self::CANCELED              => 'Cancelado',
+        };
+    }
+
     public function nextAllowedStatuses(): array
     {
         return match ($this) {

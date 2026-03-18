@@ -38,6 +38,40 @@ class ShippingMethodResource extends Resource
                 Forms\Components\Toggle::make('active')
                     ->label('Activo')
                     ->default(true),
+
+                Forms\Components\Section::make('Datos de dirección del casillero')
+                    ->columns(2)
+                    ->schema([
+                        Forms\Components\Select::make('nombre_en_campo')
+                            ->label('Nombre del usuario va en')
+                            ->options([
+                                'nombre' => 'Nombre',
+                                'apellido' => 'Apellido',
+                            ])
+                            ->hint('Define en qué campo se coloca el nombre del usuario'),
+
+                        Forms\Components\TextInput::make('complemento_nombre')
+                            ->label('Complemento de nombre (ej: SQE CR)'),
+
+                        Forms\Components\TextInput::make('pais')
+                            ->label('País'),
+
+                        Forms\Components\TextInput::make('direccion')
+                            ->label('Dirección')
+                            ->columnSpanFull(),
+
+                        Forms\Components\TextInput::make('estado')
+                            ->label('Estado / Departamento'),
+
+                        Forms\Components\TextInput::make('ciudad')
+                            ->label('Ciudad'),
+
+                        Forms\Components\TextInput::make('telefono')
+                            ->label('Teléfono'),
+
+                        Forms\Components\TextInput::make('codigo_postal')
+                            ->label('Código Postal'),
+                    ]),
             ]);
     }
 

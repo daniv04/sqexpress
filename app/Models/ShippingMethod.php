@@ -12,6 +12,14 @@ class ShippingMethod extends Model
     protected $fillable = [
         'name',
         'active',
+        'pais',
+        'direccion',
+        'estado',
+        'ciudad',
+        'telefono',
+        'codigo_postal',
+        'nombre_en_campo',
+        'complemento_nombre',
     ];
 
     protected function casts(): array

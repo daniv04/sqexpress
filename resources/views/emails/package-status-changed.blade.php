@@ -26,9 +26,9 @@
         <p>Tu paquete con tracking <strong>{{ $package->tracking }}</strong> cambió de estado:</p>
 
         <div class="status-row">
-            <span class="status-badge">{{ $fromStatus }}</span>
+            <span class="status-badge">{{ \App\Enums\PackageStatus::from($fromStatus)->label() }}</span>
             <span class="arrow">→</span>
-            <span class="status-badge new">{{ $toStatus }}</span>
+            <span class="status-badge new">{{ \App\Enums\PackageStatus::from($toStatus)->label() }}</span>
         </div>
 
         @if ($package->shelf_location)

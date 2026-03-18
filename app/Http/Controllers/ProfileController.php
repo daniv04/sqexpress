@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Models\ShippingMethod;
 use App\Services\GeodataService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -21,8 +22,11 @@ class ProfileController extends Controller
     {
         $user = $request->user()->load(['provincia', 'canton', 'distrito']);
         $provincias = $this->geodataService->getProvincias();
+        $shippingMethods = ShippingMethod::where('active', true)
+            ->whereNotNull('pais')
+            ->get();
 
-        return view('profile.edit', compact('user', 'provincias'));
+        return view('profile.edit', compact('user', 'provincias', 'shippingMethods'));
     }
 
     /**
