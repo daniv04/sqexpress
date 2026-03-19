@@ -6,6 +6,7 @@ use App\Enums\PackageStatus;
 use App\Filament\Resources\PackageResource\Pages;
 use App\Models\Package;
 use App\Models\ShippingMethod;
+use App\Services\DbService\InvoiceService;
 use App\Services\DbService\PackageService;
 use DomainException;
 use Illuminate\Support\Facades\Auth;
@@ -130,6 +131,17 @@ class PackageResource extends Resource
                     ->label('Prealertado')
                     ->date('d/m/Y')
                     ->sortable(),
+
+                Tables\Columns\TextColumn::make('invoice_number')
+                    ->label('Factura')
+                    ->placeholder('—')
+                    ->fontFamily('mono'),
+
+                Tables\Columns\TextColumn::make('invoice_generated_at')
+                    ->label('Facturado')
+                    ->date('d/m/Y')
+                    ->placeholder('—')
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([
@@ -203,6 +215,49 @@ class PackageResource extends Resource
                     ->hidden(fn (Package $record): bool => empty(
                         PackageStatus::from($record->status)->nextAllowedStatuses()
                     )),
+
+                Tables\Actions\Action::make('generar_factura')
+                    ->label(fn (Package $record) => $record->hasInvoice() ? 'Reenviar Factura' : 'Generar Factura')
+                    ->icon('heroicon-o-document-text')
+                    ->color(fn (Package $record) => $record->hasInvoice() ? 'gray' : 'success')
+                    ->visible(fn (Package $record) => $record->status === PackageStatus::READY_TO_DELIVER->value)
+                    ->form(fn (Package $record) => [
+                        Forms\Components\TextInput::make('service_cost')
+                            ->label('Costo del servicio (₡)')
+                            ->numeric()
+                            ->minValue(0)
+                            ->required()
+                            ->default($record->service_cost),
+                        Forms\Components\Placeholder::make('invoice_info')
+                            ->label('Estado')
+                            ->content(fn () => $record->hasInvoice()
+                                ? "Factura {$record->invoice_number} ya generada. Se enviará nuevamente."
+                                : 'Se generará una nueva factura.'),
+                    ])
+                    ->action(function (Package $record, array $data) {
+                        $service = app(InvoiceService::class);
+                        try {
+                            $service->generateAndPersistInvoice(
+                                package: $record,
+                                serviceCost: (float) $data['service_cost'],
+                                adminId: Auth::id(),
+                            );
+                            Notification::make()
+                                ->title('Factura generada')
+                                ->body('La factura se enviará por correo al cliente.')
+                                ->success()
+                                ->send();
+                        } catch (\Throwable $e) {
+                            Notification::make()
+                                ->title('Error al generar factura')
+                                ->body($e->getMessage())
+                                ->danger()
+                                ->send();
+                        }
+                    })
+                    ->requiresConfirmation()
+                    ->modalHeading(fn (Package $record) => $record->hasInvoice() ? 'Reenviar Factura' : 'Generar Factura')
+                    ->modalDescription('El PDF se generará y enviará por correo al cliente.'),
 
                 Tables\Actions\ViewAction::make(),
             ])

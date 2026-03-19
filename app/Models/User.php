@@ -91,4 +91,9 @@ class User extends Authenticatable implements FilamentUser
     {
         return $this->belongsTo(Distrito::class);
     }
+
+    public function getTotalPointsAttribute(): int
+    {
+        return (int) $this->packages()->sum('points_earned');
+    }
 }

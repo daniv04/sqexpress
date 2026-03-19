@@ -4,6 +4,7 @@ namespace App\Filament\Resources\PackageResource\Pages;
 
 use App\Enums\PackageStatus;
 use App\Filament\Resources\PackageResource;
+use App\Services\DbService\InvoiceService;
 use App\Services\DbService\PackageService;
 use DomainException;
 use Filament\Actions;
@@ -70,6 +71,50 @@ class ViewPackage extends ViewRecord
                 ->hidden(fn (): bool => empty(
                     PackageStatus::from($this->record->status)->nextAllowedStatuses()
                 )),
+
+            Actions\Action::make('generar_factura')
+                ->label(fn () => $this->record->hasInvoice() ? 'Reenviar Factura' : 'Generar Factura')
+                ->icon('heroicon-o-document-text')
+                ->color(fn () => $this->record->hasInvoice() ? 'gray' : 'success')
+                ->visible(fn () => $this->record->status === PackageStatus::READY_TO_DELIVER->value)
+                ->form(fn () => [
+                    Forms\Components\TextInput::make('service_cost')
+                        ->label('Costo del servicio (₡)')
+                        ->numeric()
+                        ->minValue(0)
+                        ->required()
+                        ->default($this->record->service_cost),
+                    Forms\Components\Placeholder::make('invoice_info')
+                        ->label('Estado')
+                        ->content(fn () => $this->record->hasInvoice()
+                            ? "Factura {$this->record->invoice_number} ya generada. Se enviará nuevamente."
+                            : 'Se generará una nueva factura.'),
+                ])
+                ->action(function (array $data) {
+                    $service = app(InvoiceService::class);
+                    try {
+                        $service->generateAndPersistInvoice(
+                            package: $this->record,
+                            serviceCost: (float) $data['service_cost'],
+                            adminId: auth()->id(),
+                        );
+                        $this->refreshFormData(['invoice_number', 'invoice_generated_at', 'service_cost', 'points_earned']);
+                        Notification::make()
+                            ->title('Factura generada')
+                            ->body('La factura se enviará por correo al cliente.')
+                            ->success()
+                            ->send();
+                    } catch (\Throwable $e) {
+                        Notification::make()
+                            ->title('Error al generar factura')
+                            ->body($e->getMessage())
+                            ->danger()
+                            ->send();
+                    }
+                })
+                ->requiresConfirmation()
+                ->modalHeading(fn () => $this->record->hasInvoice() ? 'Reenviar Factura' : 'Generar Factura')
+                ->modalDescription('El PDF se generará y enviará por correo al cliente.'),
         ];
     }
 
@@ -118,6 +163,20 @@ class ViewPackage extends ViewRecord
                         Infolists\Components\TextEntry::make('approx_value')
                             ->label('Valor aprox.')
                             ->prefix('$')
+                            ->placeholder('—'),
+
+                        Infolists\Components\TextEntry::make('service_cost')
+                            ->label('Costo servicio')
+                            ->prefix('₡')
+                            ->placeholder('—'),
+
+                        Infolists\Components\TextEntry::make('invoice_number')
+                            ->label('Factura')
+                            ->fontFamily('mono')
+                            ->placeholder('—'),
+
+                        Infolists\Components\TextEntry::make('points_earned')
+                            ->label('Puntos otorgados')
                             ->placeholder('—'),
 
                         Infolists\Components\TextEntry::make('prealerted_at')

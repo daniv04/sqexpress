@@ -21,6 +21,10 @@ class Package extends Model
         'status',
         'shelf_location',
         'prealerted_at',
+        'service_cost',
+        'invoice_number',
+        'invoice_generated_at',
+        'points_earned',
     ];
 
     protected function casts(): array
@@ -28,8 +32,16 @@ class Package extends Model
         return [
             'weight' => 'decimal:2',
             'approx_value' => 'decimal:2',
+            'service_cost' => 'decimal:2',
             'prealerted_at' => 'datetime',
+            'invoice_generated_at' => 'datetime',
+            'points_earned' => 'integer',
         ];
+    }
+
+    public function hasInvoice(): bool
+    {
+        return $this->invoice_number !== null;
     }
 
     public function user(): BelongsTo
