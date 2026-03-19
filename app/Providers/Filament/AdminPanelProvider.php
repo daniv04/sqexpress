@@ -34,6 +34,9 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
+            ->brandLogo(asset('images/logo_sqexpress_noback.png'))
+            ->darkModeBrandLogo(asset('images/logo_sqexpress_noback_dark.png'))
+            ->brandLogoHeight('3.5rem')
             ->colors([
                 'primary' => Color::Indigo,
             ])

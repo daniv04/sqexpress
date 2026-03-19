@@ -90,6 +90,7 @@ class UserResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->searchPlaceholder('Buscar...')
             ->columns([
                 Tables\Columns\TextColumn::make('name')
                     ->label('Nombre')

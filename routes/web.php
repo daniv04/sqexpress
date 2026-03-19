@@ -4,9 +4,16 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PackageController;
 use App\Http\Controllers\PanelController;
 use App\Http\Controllers\Api\GeodataController;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
+    if (Auth::check()) {
+        return Auth::user()->role === 'admin'
+            ? redirect('/admin')
+            : redirect()->route('panel');
+    }
+
     return view('welcome');
 });
 
