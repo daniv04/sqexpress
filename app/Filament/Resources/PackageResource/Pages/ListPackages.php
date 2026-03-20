@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\PackageResource\Pages;
 
 use App\Filament\Resources\PackageResource;
+use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 
 class ListPackages extends ListRecords
@@ -11,6 +12,8 @@ class ListPackages extends ListRecords
 
     protected function getHeaderActions(): array
     {
-        return [];
+        return [
+            Actions\CreateAction::make(),
+        ];
     }
 }

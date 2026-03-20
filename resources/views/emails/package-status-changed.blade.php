@@ -17,7 +17,10 @@
     </style>
 </head>
 <body>
-    <div class="header">
+    <div style="background:#ffffff; padding:16px 20px; border-radius:8px 8px 0 0; border:1px solid #e5e7eb; border-bottom:none; text-align:left;">
+        <img src="https://i.imgur.com/aSeqoim.png" alt="SQExpress" style="height:48px; display:block;">
+    </div>
+    <div class="header" style="border-radius:0;">
         <h2 style="margin:0;">Tu paquete actualizó su estado</h2>
     </div>
 

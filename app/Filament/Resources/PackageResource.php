@@ -77,10 +77,20 @@ class PackageResource extends Resource
                             ->label('Estante')
                             ->maxLength(100),
 
+                        Forms\Components\Select::make('status')
+                            ->label('Estado')
+                            ->options(collect(PackageStatus::cases())->mapWithKeys(
+                                fn (PackageStatus $s) => [$s->value => $s->label()]
+                            ))
+                            ->required()
+                            ->default(PackageStatus::PREALERTED->value)
+                            ->visibleOn('create'),
+
                         Forms\Components\TextInput::make('status')
                             ->label('Estado')
                             ->disabled()
-                            ->dehydrated(false),
+                            ->dehydrated(false)
+                            ->hiddenOn('create'),
                     ]),
             ]);
     }
@@ -296,6 +306,7 @@ class PackageResource extends Resource
     {
         return [
             'index' => Pages\ListPackages::route('/'),
+            'create' => Pages\CreatePackage::route('/create'),
             'view' => Pages\ViewPackage::route('/{record}'),
         ];
     }
