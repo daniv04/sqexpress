@@ -228,11 +228,33 @@ class PackageResource extends Resource
                             ->minValue(0)
                             ->required()
                             ->default($record->service_cost),
+                        Forms\Components\Toggle::make('has_delivery_fee')
+                            ->label('Cobro adicional por entrega')
+                            ->helperText('Activa si se requiere cobrar por entrega a domicilio')
+                            ->live()
+                            ->default(fn () => (float) $record->delivery_fee > 0),
+                        Forms\Components\TextInput::make('delivery_fee')
+                            ->label('Monto adicional por entrega (₡)')
+                            ->numeric()
+                            ->minValue(0)
+                            ->required()
+                            ->default(fn () => $record->delivery_fee ?? 0)
+                            ->visible(fn (Forms\Get $get): bool => (bool) $get('has_delivery_fee')),
                         Forms\Components\Placeholder::make('invoice_info')
                             ->label('Estado')
                             ->content(fn () => $record->hasInvoice()
                                 ? "Factura {$record->invoice_number} ya generada. Se enviará nuevamente."
                                 : 'Se generará una nueva factura.'),
+                        Forms\Components\Placeholder::make('discount_info')
+                            ->label('Descuento')
+                            ->content(function () use ($record): string {
+                                $service = app(\App\Services\DbService\InvoiceService::class);
+                                $isFirst = $service->isFirstInvoice($record->user, $record);
+
+                                return $isFirst
+                                    ? '🎉 Cliente nuevo — se aplicará un 10% de descuento en esta factura.'
+                                    : 'Sin descuento.';
+                            }),
                     ])
                     ->action(function (Package $record, array $data) {
                         $service = app(InvoiceService::class);
@@ -241,6 +263,7 @@ class PackageResource extends Resource
                                 package: $record,
                                 serviceCost: (float) $data['service_cost'],
                                 adminId: Auth::id(),
+                                deliveryFee: $data['has_delivery_fee'] ? (float) ($data['delivery_fee'] ?? 0) : 0.0,
                             );
                             Notification::make()
                                 ->title('Factura generada')

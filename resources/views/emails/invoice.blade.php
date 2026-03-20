@@ -27,14 +27,41 @@
 
         <p>Ganaste <strong>{{ $package->points_earned }} puntos</strong> con este envío.</p>
 
+        @if($package->discount_amount > 0)
+        <div style="background-color: #dcfce7; color: #15803d; padding: 10px 16px; border-radius: 6px; margin: 12px 0; font-weight: bold;">
+            🎉 ¡Descuento del 10% aplicado por ser tu primera factura con SQExpress! Ahorraste ₡{{ number_format($package->discount_amount, 2) }}.
+        </div>
+        @endif
+
         <div class="field">
             <div class="label">Tracking</div>
             <div class="value">{{ $package->tracking }}</div>
         </div>
 
+        @if($package->discount_amount > 0)
+        <div class="field">
+            <div class="label">Subtotal</div>
+            <div class="value">₡{{ number_format($package->service_cost, 2) }}</div>
+        </div>
+        <div class="field">
+            <div class="label">Descuento (10%)</div>
+            <div class="value" style="color: #15803d;">- ₡{{ number_format($package->discount_amount, 2) }}</div>
+        </div>
+        @else
         <div class="field">
             <div class="label">Costo del servicio</div>
             <div class="value">₡{{ number_format($package->service_cost, 2) }}</div>
+        </div>
+        @endif
+        @if($package->delivery_fee > 0)
+        <div class="field">
+            <div class="label">Cargo por entrega</div>
+            <div class="value">₡{{ number_format($package->delivery_fee, 2) }}</div>
+        </div>
+        @endif
+        <div class="field">
+            <div class="label">Total a pagar</div>
+            <div class="value">₡{{ number_format($package->service_cost - $package->discount_amount + $package->delivery_fee, 2) }}</div>
         </div>
 
         <div class="field">

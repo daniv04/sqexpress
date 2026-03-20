@@ -55,4 +55,9 @@ Route::prefix('api')->group(function () {
     Route::get('/cantones/{cantonId}/distritos', [GeodataController::class, 'getDistritos']);
 });
 
+Route::get('/admin/facturas/{package}/pdf', function (\App\Models\Package $package, \App\Services\DbService\InvoiceService $invoiceService) {
+    abort_unless($package->hasInvoice(), 404);
+    return $invoiceService->buildPdf($package)->download($package->invoice_number . '.pdf');
+})->middleware(['auth', 'isAdmin'])->name('admin.invoices.pdf');
+
 require __DIR__.'/auth.php';

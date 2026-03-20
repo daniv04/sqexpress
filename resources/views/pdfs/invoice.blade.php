@@ -139,20 +139,36 @@
     </table>
 
     {{-- TOTALS --}}
+    @php $total = $package->service_cost - $package->discount_amount + $package->delivery_fee; @endphp
     <table class="totals-table">
         <tr>
-            <td style="color: #6b7280;">Costo total del servicio — envío:</td>
+            <td style="color: #6b7280;">Subtotal:</td>
             <td>₡{{ number_format($package->service_cost, 2) }}</td>
         </tr>
+        @if($package->discount_amount > 0)
+        <tr>
+            <td style="color: #15803d;">Descuento (10% — cliente nuevo):</td>
+            <td style="color: #15803d;">- ₡{{ number_format($package->discount_amount, 2) }}</td>
+        </tr>
+        @endif
+        @if($package->delivery_fee > 0)
+        <tr>
+            <td style="color: #6b7280;">Cargo por entrega:</td>
+            <td>₡{{ number_format($package->delivery_fee, 2) }}</td>
+        </tr>
+        @endif
         <tr class="total">
             <td>Total:</td>
-            <td>₡{{ number_format($package->service_cost, 2) }}</td>
+            <td>₡{{ number_format($total, 2) }}</td>
         </tr>
     </table>
 
     {{-- FOOTER --}}
     <div class="footer-note">
-        * Los puntos obtenidos son el 1% del costo total ({{ $package->points_earned }} puntos).<br>
+        * Los puntos obtenidos son el 1% del total a pagar ({{ $package->points_earned }} puntos).<br>
+        @if($package->discount_amount > 0)
+        * Descuento del 10% aplicado por ser tu primera factura con SQExpress.<br>
+        @endif
         Este documento es una factura generada automáticamente. Para consultas escriba a info@sqexpress.com.
     </div>
 
