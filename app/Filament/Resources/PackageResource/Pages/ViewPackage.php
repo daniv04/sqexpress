@@ -4,6 +4,7 @@ namespace App\Filament\Resources\PackageResource\Pages;
 
 use App\Enums\PackageStatus;
 use App\Filament\Resources\PackageResource;
+use App\Models\AppSetting;
 use App\Services\DbService\InvoiceService;
 use App\Services\DbService\PackageService;
 use DomainException;
@@ -78,27 +79,82 @@ class ViewPackage extends ViewRecord
                 ->color(fn () => $this->record->hasInvoice() ? 'gray' : 'success')
                 ->visible(fn () => $this->record->status === PackageStatus::READY_TO_DELIVER->value)
                 ->form(fn () => [
+                    Forms\Components\TextInput::make('weight')
+                        ->label('Peso del paquete (kg)')
+                        ->numeric()
+                        ->minValue(0)
+                        ->live()
+                        ->visible(fn () => empty($this->record->weight))
+                        ->required(fn () => empty($this->record->weight))
+                        ->helperText('El peso no ha sido registrado. Ingresa el peso para calcular el costo.')
+                        ->afterStateUpdated(function (Forms\Set $set, $state): void {
+                            $price = (float) AppSetting::get('price_per_kg', 0);
+                            $set('service_cost', round((float) $state * $price, 2));
+                        }),
                     Forms\Components\TextInput::make('service_cost')
                         ->label('Costo del servicio (₡)')
                         ->numeric()
                         ->minValue(0)
                         ->required()
-                        ->default($this->record->service_cost),
+                        ->live()
+                        ->default(function (): float {
+                            $weight = (float) ($this->record->weight ?? 0);
+                            $price = (float) AppSetting::get('price_per_kg', 0);
+
+                            return $this->record->service_cost ?? round($weight * $price, 2);
+                        }),
+                    Forms\Components\Placeholder::make('cost_info')
+                        ->label('Cálculo')
+                        ->content(function (Forms\Get $get): string {
+                            $weight = !empty($this->record->weight) ? (float) $this->record->weight : (float) $get('weight');
+                            $price = (float) AppSetting::get('price_per_kg', 0);
+                            $cost = round($weight * $price, 2);
+
+                            return "{$weight} kg × ₡" . number_format($price, 2) . ' = ₡' . number_format($cost, 2);
+                        }),
+                    Forms\Components\Toggle::make('has_delivery_fee')
+                        ->label('Cobro adicional por entrega')
+                        ->helperText('Activa si se requiere cobrar por entrega a domicilio')
+                        ->live()
+                        ->default(fn () => (float) $this->record->delivery_fee > 0),
+                    Forms\Components\TextInput::make('delivery_fee')
+                        ->label('Monto adicional por entrega (₡)')
+                        ->numeric()
+                        ->minValue(0)
+                        ->required()
+                        ->default(fn () => $this->record->delivery_fee ?? 0)
+                        ->visible(fn (Forms\Get $get): bool => (bool) $get('has_delivery_fee')),
                     Forms\Components\Placeholder::make('invoice_info')
                         ->label('Estado')
                         ->content(fn () => $this->record->hasInvoice()
                             ? "Factura {$this->record->invoice_number} ya generada. Se enviará nuevamente."
                             : 'Se generará una nueva factura.'),
+                    Forms\Components\Placeholder::make('discount_info')
+                        ->label('Descuento')
+                        ->content(function (): string {
+                            $service = app(InvoiceService::class);
+                            $isFirst = $service->isFirstInvoice($this->record->user, $this->record);
+
+                            return $isFirst
+                                ? '🎉 Cliente nuevo — se aplicará un 10% de descuento en esta factura.'
+                                : 'Sin descuento.';
+                        }),
                 ])
                 ->action(function (array $data) {
+                    if (empty($this->record->weight) && !empty($data['weight'])) {
+                        $this->record->update(['weight' => (float) $data['weight']]);
+                        $this->record->refresh();
+                    }
+
                     $service = app(InvoiceService::class);
                     try {
                         $service->generateAndPersistInvoice(
                             package: $this->record,
                             serviceCost: (float) $data['service_cost'],
                             adminId: auth()->id(),
+                            deliveryFee: $data['has_delivery_fee'] ? (float) ($data['delivery_fee'] ?? 0) : 0.0,
                         );
-                        $this->refreshFormData(['invoice_number', 'invoice_generated_at', 'service_cost', 'points_earned']);
+                        $this->refreshFormData(['weight', 'invoice_number', 'invoice_generated_at', 'service_cost', 'points_earned']);
                         Notification::make()
                             ->title('Factura generada')
                             ->body('La factura se enviará por correo al cliente.')

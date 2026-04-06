@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Enums\PackageStatus;
 use App\Filament\Resources\PackageResource\Pages;
+use App\Models\AppSetting;
 use App\Models\Package;
 use App\Models\ShippingMethod;
 use App\Services\DbService\InvoiceService;
@@ -232,12 +233,39 @@ class PackageResource extends Resource
                     ->color(fn (Package $record) => $record->hasInvoice() ? 'gray' : 'success')
                     ->visible(fn (Package $record) => $record->status === PackageStatus::READY_TO_DELIVER->value)
                     ->form(fn (Package $record) => [
+                        Forms\Components\TextInput::make('weight')
+                            ->label('Peso del paquete (kg)')
+                            ->numeric()
+                            ->minValue(0)
+                            ->live()
+                            ->visible(fn () => empty($record->weight))
+                            ->required(fn () => empty($record->weight))
+                            ->helperText('El peso no ha sido registrado. Ingresa el peso para calcular el costo.')
+                            ->afterStateUpdated(function (Forms\Set $set, $state): void {
+                                $price = (float) AppSetting::get('price_per_kg', 0);
+                                $set('service_cost', round((float) $state * $price, 2));
+                            }),
                         Forms\Components\TextInput::make('service_cost')
                             ->label('Costo del servicio (₡)')
                             ->numeric()
                             ->minValue(0)
                             ->required()
-                            ->default($record->service_cost),
+                            ->live()
+                            ->default(function () use ($record): float {
+                                $weight = (float) ($record->weight ?? 0);
+                                $price = (float) AppSetting::get('price_per_kg', 0);
+
+                                return $record->service_cost ?? round($weight * $price, 2);
+                            }),
+                        Forms\Components\Placeholder::make('cost_info')
+                            ->label('Cálculo')
+                            ->content(function (Forms\Get $get) use ($record): string {
+                                $weight = !empty($record->weight) ? (float) $record->weight : (float) $get('weight');
+                                $price = (float) AppSetting::get('price_per_kg', 0);
+                                $cost = round($weight * $price, 2);
+
+                                return "{$weight} kg × ₡" . number_format($price, 2) . ' = ₡' . number_format($cost, 2);
+                            }),
                         Forms\Components\Toggle::make('has_delivery_fee')
                             ->label('Cobro adicional por entrega')
                             ->helperText('Activa si se requiere cobrar por entrega a domicilio')
@@ -267,6 +295,11 @@ class PackageResource extends Resource
                             }),
                     ])
                     ->action(function (Package $record, array $data) {
+                        if (empty($record->weight) && !empty($data['weight'])) {
+                            $record->update(['weight' => (float) $data['weight']]);
+                            $record->refresh();
+                        }
+
                         $service = app(InvoiceService::class);
                         try {
                             $service->generateAndPersistInvoice(
