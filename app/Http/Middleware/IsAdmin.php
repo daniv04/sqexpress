@@ -22,6 +22,6 @@ class IsAdmin
         }
 
         // Redirigir si no es admin
-        return redirect('/')->with('error', 'No tienes permiso para acceder a esta área.');
+        return redirect('/mis-paquetes')->with('error', 'No tienes permiso para acceder a esta área.');
     }
 }

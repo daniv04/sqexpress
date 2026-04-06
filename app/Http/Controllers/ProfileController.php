@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Models\ShippingMethod;
+use App\Services\GeodataService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -11,14 +13,20 @@ use Illuminate\View\View;
 
 class ProfileController extends Controller
 {
+    public function __construct(private GeodataService $geodataService) {}
+
     /**
      * Display the user's profile form.
      */
     public function edit(Request $request): View
     {
-        return view('profile.edit', [
-            'user' => $request->user(),
-        ]);
+        $user = $request->user()->load(['provincia', 'canton', 'distrito']);
+        $provincias = $this->geodataService->getProvincias();
+        $shippingMethods = ShippingMethod::where('active', true)
+            ->whereNotNull('pais')
+            ->get();
+
+        return view('profile.edit', compact('user', 'provincias', 'shippingMethods'));
     }
 
     /**

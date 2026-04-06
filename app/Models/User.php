@@ -3,11 +3,17 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-class User extends Authenticatable
+/**
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\Package[] $packages
+ */
+class User extends Authenticatable implements FilamentUser
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
@@ -22,6 +28,14 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'phone',
+        'cedula',
+        'address',
+            'provincia_id',
+            'canton_id',
+            'distrito_id',
+        'locker_code',
+        'active',
     ];
 
     /**
@@ -44,6 +58,42 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'active' => 'boolean',
         ];
+    }
+
+    public function canAccessPanel(Panel $panel): bool
+    {
+        return $this->role === 'admin';
+    }
+
+    public function packages(): HasMany
+    {
+        return $this->hasMany(Package::class);
+    }
+
+    public function packageStatusChanges(): HasMany
+    {
+        return $this->hasMany(PackageStatusHistory::class, 'changed_by');
+    }
+
+    public function provincia()
+    {
+        return $this->belongsTo(Provincia::class);
+    }
+
+    public function canton()
+    {
+        return $this->belongsTo(Canton::class);
+    }
+
+    public function distrito()
+    {
+        return $this->belongsTo(Distrito::class);
+    }
+
+    public function getTotalPointsAttribute(): int
+    {
+        return (int) $this->packages()->sum('points_earned');
     }
 }
