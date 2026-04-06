@@ -45,6 +45,15 @@ class ViewInvoice extends ViewRecord
                         ->label('Cargo por entrega')->prefix('₡')
                         ->color('warning')
                         ->visible(fn ($record): bool => (float) $record->delivery_fee > 0),
+                    Infolists\Components\TextEntry::make('total')
+                        ->label('Total')
+                        ->prefix('₡')
+                        ->weight(\Filament\Support\Enums\FontWeight::Bold)
+                        ->size(\Filament\Infolists\Components\TextEntry\TextEntrySize::Large)
+                        ->state(fn ($record): string => number_format(
+                            (float) $record->service_cost - (float) $record->discount_amount + (float) $record->delivery_fee,
+                            2
+                        )),
                     Infolists\Components\TextEntry::make('points_earned')
                         ->label('Puntos otorgados')->suffix(' pts'),
                 ]),
