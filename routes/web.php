@@ -14,7 +14,7 @@ Route::get('/', function () {
             : redirect()->route('panel');
     }
 
-    return view('welcome');
+    return view('login');
 });
 
 Route::get('/panel', [PanelController::class, 'index'])
