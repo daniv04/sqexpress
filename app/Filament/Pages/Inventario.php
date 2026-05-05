@@ -55,7 +55,7 @@ class Inventario extends Page implements HasTable
 
                 Tables\Columns\TextColumn::make('weight')
                     ->label('Peso')
-                    ->suffix(' lbs')
+                    ->suffix(' kg')
                     ->sortable()
                     ->placeholder('—'),
 

@@ -41,7 +41,7 @@ class Configuracion extends Page implements HasForms
                 TextInput::make('price_per_kg')
                     ->label('Precio por kilogramo (₡)')
                     ->numeric()
-                    ->minValue(0)
+                    ->minValue(0.01)
                     ->required()
                     ->prefix('₡')
                     ->helperText('Este precio se usará para calcular el costo del servicio al generar facturas.'),
