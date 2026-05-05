@@ -16,9 +16,9 @@ class SendInvoiceEmail implements ShouldQueue
 
     public function handle(InvoiceGenerated $event): void
     {
-        $package = $event->package;
-        $pdf = $this->invoiceService->buildPdf($package);
+        $invoice = $event->invoice;
+        $pdf = $this->invoiceService->buildPdf($invoice);
 
-        Mail::to($package->user->email)->send(new InvoiceMail($package, $pdf->output()));
+        Mail::to($invoice->user->email)->send(new InvoiceMail($invoice, $pdf->output()));
     }
 }

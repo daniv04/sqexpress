@@ -53,9 +53,8 @@
             <td style="width: 50%;">
                 <div class="invoice-label">FACTURA</div>
                 <div class="invoice-meta">
-                    <strong>N.°</strong> {{ $package->invoice_number }}<br>
-                    <strong>Fecha:</strong> {{ $package->invoice_generated_at->format('d/m/Y') }}<br>
-                    <strong>Tracking:</strong> {{ $package->tracking }}
+                    <strong>N.°</strong> {{ $invoice->invoice_number }}<br>
+                    <strong>Fecha:</strong> {{ $invoice->generated_at->format('d/m/Y') }}
                 </div>
             </td>
         </tr>
@@ -69,37 +68,37 @@
         <table>
             <tr>
                 <td>Nombre:</td>
-                <td><strong>{{ $package->user->name }}</strong></td>
+                <td><strong>{{ $invoice->user->name }}</strong></td>
             </tr>
             <tr>
                 <td>Correo:</td>
-                <td>{{ $package->user->email }}</td>
+                <td>{{ $invoice->user->email }}</td>
             </tr>
-            @if($package->user->phone)
+            @if($invoice->user->phone)
             <tr>
                 <td>Teléfono:</td>
-                <td>{{ $package->user->phone }}</td>
+                <td>{{ $invoice->user->phone }}</td>
             </tr>
             @endif
-            @if($package->user->address)
+            @if($invoice->user->address)
             <tr>
                 <td>Dirección:</td>
-                <td>{{ $package->user->address }}</td>
+                <td>{{ $invoice->user->address }}</td>
             </tr>
             @endif
-            @if($package->user->distrito || $package->user->canton || $package->user->provincia)
+            @if($invoice->user->distrito || $invoice->user->canton || $invoice->user->provincia)
             <tr>
                 <td>Ubicación:</td>
                 <td>
-                    {{ $package->user->distrito?->name }}
-                    @if($package->user->canton), {{ $package->user->canton->name }}@endif
-                    @if($package->user->provincia), {{ $package->user->provincia->name }}@endif
+                    {{ $invoice->user->distrito?->name }}
+                    @if($invoice->user->canton), {{ $invoice->user->canton->name }}@endif
+                    @if($invoice->user->provincia), {{ $invoice->user->provincia->name }}@endif
                 </td>
             </tr>
             @endif
             <tr>
                 <td>Casillero:</td>
-                <td><strong>{{ $package->user->locker_code }}</strong></td>
+                <td><strong>{{ $invoice->user->locker_code }}</strong></td>
             </tr>
         </table>
     </div>
@@ -116,57 +115,58 @@
             </tr>
         </thead>
         <tbody>
+            @foreach($invoice->packages as $i => $package)
             <tr>
-                <td>1</td>
+                <td>{{ $i + 1 }}</td>
                 <td>
                     <strong>Servicio de envío</strong>
                     <div class="item-desc">
                         Tracking: {{ $package->tracking }}<br>
                         @if($package->weight)
-                            Peso: {{ $package->weight }} lbs<br>
+                            Peso: {{ $package->weight }} kg<br>
                         @endif
-                        Puntos obtenidos: {{ $package->points_earned }}<br>
                         @if($package->description)
-                            Descripción: {{ $package->description }}
+                            Descripción: {{ $package->description }}<br>
                         @endif
+                        Método: {{ $package->shippingMethod?->name ?? 'N/A' }}
                     </div>
                 </td>
                 <td class="right">1</td>
                 <td class="right">₡{{ number_format($package->service_cost, 2) }}</td>
                 <td class="right">₡{{ number_format($package->service_cost, 2) }}</td>
             </tr>
+            @endforeach
         </tbody>
     </table>
 
     {{-- TOTALS --}}
-    @php $total = $package->service_cost - $package->discount_amount + $package->delivery_fee; @endphp
     <table class="totals-table">
         <tr>
             <td style="color: #6b7280;">Subtotal:</td>
-            <td>₡{{ number_format($package->service_cost, 2) }}</td>
+            <td>₡{{ number_format($invoice->subtotal, 2) }}</td>
         </tr>
-        @if($package->discount_amount > 0)
+        @if($invoice->discount_amount > 0)
         <tr>
             <td style="color: #15803d;">Descuento (10% — cliente nuevo):</td>
-            <td style="color: #15803d;">- ₡{{ number_format($package->discount_amount, 2) }}</td>
+            <td style="color: #15803d;">- ₡{{ number_format($invoice->discount_amount, 2) }}</td>
         </tr>
         @endif
-        @if($package->delivery_fee > 0)
+        @if($invoice->delivery_fee > 0)
         <tr>
             <td style="color: #6b7280;">Cargo por entrega:</td>
-            <td>₡{{ number_format($package->delivery_fee, 2) }}</td>
+            <td>₡{{ number_format($invoice->delivery_fee, 2) }}</td>
         </tr>
         @endif
         <tr class="total">
             <td>Total:</td>
-            <td>₡{{ number_format($total, 2) }}</td>
+            <td>₡{{ number_format($invoice->total, 2) }}</td>
         </tr>
     </table>
 
     {{-- FOOTER --}}
     <div class="footer-note">
-        * Los puntos obtenidos son el 1% del total a pagar ({{ $package->points_earned }} puntos).<br>
-        @if($package->discount_amount > 0)
+        * Los puntos obtenidos son el 1% del total a pagar ({{ $invoice->points_earned }} puntos).<br>
+        @if($invoice->discount_amount > 0)
         * Descuento del 10% aplicado por ser tu primera factura con SQExpress.<br>
         @endif
         Este documento es una factura generada automáticamente. Para consultas escriba a info@sqexpress.com.

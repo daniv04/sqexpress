@@ -2,7 +2,7 @@
 
 namespace App\Events;
 
-use App\Models\Package;
+use App\Models\Invoice;
 use Illuminate\Foundation\Events\Dispatchable;
 
 class InvoiceGenerated
@@ -10,6 +10,6 @@ class InvoiceGenerated
     use Dispatchable;
 
     public function __construct(
-        public readonly Package $package,
+        public readonly Invoice $invoice,
     ) {}
 }

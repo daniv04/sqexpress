@@ -32,7 +32,7 @@ class PackageFactory extends Factory
             'user_id' => User::factory(),
             'shipping_method_id' => ShippingMethod::factory(),
             'description' => fake()->sentence(6),
-            'weight' => fake()->randomFloat(2, 0.5, 30),
+            'weight' => fake()->randomFloat(2, 0.2, 15),  // Peso en kilogramos
             'approx_value' => fake()->randomFloat(2, 20, 1500),
             'status' => fake()->randomElement($statuses),
             'shelf_location' => fake()->optional()->bothify('A-##'),

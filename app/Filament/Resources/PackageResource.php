@@ -3,11 +3,11 @@
 namespace App\Filament\Resources;
 
 use App\Enums\PackageStatus;
+use App\Filament\Resources\InvoiceResource;
 use App\Filament\Resources\PackageResource\Pages;
 use App\Models\AppSetting;
 use App\Models\Package;
 use App\Models\ShippingMethod;
-use App\Services\DbService\InvoiceService;
 use App\Services\DbService\PackageService;
 use DomainException;
 use Illuminate\Support\Facades\Auth;
@@ -65,7 +65,7 @@ class PackageResource extends Resource
                             ->columnSpanFull(),
 
                         Forms\Components\TextInput::make('weight')
-                            ->label('Peso (lbs)')
+                            ->label('Peso (kg)')
                             ->numeric()
                             ->minValue(0),
 
@@ -130,7 +130,7 @@ class PackageResource extends Resource
 
                 Tables\Columns\TextColumn::make('weight')
                     ->label('Peso')
-                    ->suffix(' lbs')
+                    ->suffix(' kg')
                     ->sortable()
                     ->placeholder('—'),
 
@@ -227,103 +227,16 @@ class PackageResource extends Resource
                         PackageStatus::from($record->status)->nextAllowedStatuses()
                     )),
 
-                Tables\Actions\Action::make('generar_factura')
-                    ->label(fn (Package $record) => $record->hasInvoice() ? 'Reenviar Factura' : 'Generar Factura')
+                Tables\Actions\Action::make('crear_factura')
+                    ->label('Crear Factura')
                     ->icon('heroicon-o-document-text')
-                    ->color(fn (Package $record) => $record->hasInvoice() ? 'gray' : 'success')
-                    ->visible(fn (Package $record) => $record->status === PackageStatus::READY_TO_DELIVER->value)
-                    ->form(fn (Package $record) => [
-                        Forms\Components\TextInput::make('weight')
-                            ->label('Peso del paquete (kg)')
-                            ->numeric()
-                            ->minValue(0)
-                            ->live()
-                            ->visible(fn () => empty($record->weight))
-                            ->required(fn () => empty($record->weight))
-                            ->helperText('El peso no ha sido registrado. Ingresa el peso para calcular el costo.')
-                            ->afterStateUpdated(function (Forms\Set $set, $state): void {
-                                $price = (float) AppSetting::get('price_per_kg', 0);
-                                $set('service_cost', round((float) $state * $price, 2));
-                            }),
-                        Forms\Components\TextInput::make('service_cost')
-                            ->label('Costo del servicio (₡)')
-                            ->numeric()
-                            ->minValue(0)
-                            ->required()
-                            ->live()
-                            ->default(function () use ($record): float {
-                                $weight = (float) ($record->weight ?? 0);
-                                $price = (float) AppSetting::get('price_per_kg', 0);
-
-                                return $record->service_cost ?? round($weight * $price, 2);
-                            }),
-                        Forms\Components\Placeholder::make('cost_info')
-                            ->label('Cálculo')
-                            ->content(function (Forms\Get $get) use ($record): string {
-                                $weight = !empty($record->weight) ? (float) $record->weight : (float) $get('weight');
-                                $price = (float) AppSetting::get('price_per_kg', 0);
-                                $cost = round($weight * $price, 2);
-
-                                return "{$weight} kg × ₡" . number_format($price, 2) . ' = ₡' . number_format($cost, 2);
-                            }),
-                        Forms\Components\Toggle::make('has_delivery_fee')
-                            ->label('Cobro adicional por entrega')
-                            ->helperText('Activa si se requiere cobrar por entrega a domicilio')
-                            ->live()
-                            ->default(fn () => (float) $record->delivery_fee > 0),
-                        Forms\Components\TextInput::make('delivery_fee')
-                            ->label('Monto adicional por entrega (₡)')
-                            ->numeric()
-                            ->minValue(0)
-                            ->required()
-                            ->default(fn () => $record->delivery_fee ?? 0)
-                            ->visible(fn (Forms\Get $get): bool => (bool) $get('has_delivery_fee')),
-                        Forms\Components\Placeholder::make('invoice_info')
-                            ->label('Estado')
-                            ->content(fn () => $record->hasInvoice()
-                                ? "Factura {$record->invoice_number} ya generada. Se enviará nuevamente."
-                                : 'Se generará una nueva factura.'),
-                        Forms\Components\Placeholder::make('discount_info')
-                            ->label('Descuento')
-                            ->content(function () use ($record): string {
-                                $service = app(\App\Services\DbService\InvoiceService::class);
-                                $isFirst = $service->isFirstInvoice($record->user, $record);
-
-                                return $isFirst
-                                    ? '🎉 Cliente nuevo — se aplicará un 10% de descuento en esta factura.'
-                                    : 'Sin descuento.';
-                            }),
-                    ])
-                    ->action(function (Package $record, array $data) {
-                        if (empty($record->weight) && !empty($data['weight'])) {
-                            $record->update(['weight' => (float) $data['weight']]);
-                            $record->refresh();
-                        }
-
-                        $service = app(InvoiceService::class);
-                        try {
-                            $service->generateAndPersistInvoice(
-                                package: $record,
-                                serviceCost: (float) $data['service_cost'],
-                                adminId: Auth::id(),
-                                deliveryFee: $data['has_delivery_fee'] ? (float) ($data['delivery_fee'] ?? 0) : 0.0,
-                            );
-                            Notification::make()
-                                ->title('Factura generada')
-                                ->body('La factura se enviará por correo al cliente.')
-                                ->success()
-                                ->send();
-                        } catch (\Throwable $e) {
-                            Notification::make()
-                                ->title('Error al generar factura')
-                                ->body($e->getMessage())
-                                ->danger()
-                                ->send();
-                        }
-                    })
-                    ->requiresConfirmation()
-                    ->modalHeading(fn (Package $record) => $record->hasInvoice() ? 'Reenviar Factura' : 'Generar Factura')
-                    ->modalDescription('El PDF se generará y enviará por correo al cliente.'),
+                    ->color('success')
+                    ->visible(fn (Package $record): bool =>
+                        $record->status === PackageStatus::READY_TO_DELIVER->value && !$record->hasInvoice()
+                    )
+                    ->url(fn (Package $record): string =>
+                        InvoiceResource::getUrl('create') . '?user_id=' . $record->user_id
+                    ),
 
                 Tables\Actions\ViewAction::make(),
             ])

@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\InvoiceResource\Pages;
 
 use App\Filament\Resources\InvoiceResource;
+use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 
 class ListInvoices extends ListRecords
@@ -11,6 +12,8 @@ class ListInvoices extends ListRecords
 
     protected function getHeaderActions(): array
     {
-        return []; // Las facturas se generan desde PackageResource
+        return [
+            Actions\CreateAction::make(),
+        ];
     }
 }

@@ -4,9 +4,11 @@ namespace App\Filament\Resources\InvoiceResource\Pages;
 
 use App\Filament\Resources\InvoiceResource;
 use App\Filament\Resources\PackageResource;
+use App\Services\DbService\InvoiceService;
 use Filament\Actions;
 use Filament\Infolists;
 use Filament\Infolists\Infolist;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
 
 class ViewInvoice extends ViewRecord
@@ -22,6 +24,19 @@ class ViewInvoice extends ViewRecord
                 ->color('success')
                 ->url(fn (): string => route('admin.invoices.pdf', $this->record))
                 ->openUrlInNewTab(),
+
+            Actions\Action::make('reenviar_email')
+                ->label('Reenviar Email')
+                ->icon('heroicon-o-envelope')
+                ->color('gray')
+                ->requiresConfirmation()
+                ->action(function () {
+                    app(InvoiceService::class)->resendInvoice($this->record);
+                    Notification::make()
+                        ->title('Email reenviado')
+                        ->success()
+                        ->send();
+                }),
         ];
     }
 
@@ -33,9 +48,9 @@ class ViewInvoice extends ViewRecord
                 ->schema([
                     Infolists\Components\TextEntry::make('invoice_number')
                         ->label('N° Factura')->fontFamily('mono')->badge()->color('success'),
-                    Infolists\Components\TextEntry::make('invoice_generated_at')
+                    Infolists\Components\TextEntry::make('generated_at')
                         ->label('Fecha de emisión')->dateTime('d/m/Y H:i'),
-                    Infolists\Components\TextEntry::make('service_cost')
+                    Infolists\Components\TextEntry::make('subtotal')
                         ->label('Subtotal')->prefix('₡'),
                     Infolists\Components\TextEntry::make('discount_amount')
                         ->label('Descuento (10% cliente nuevo)')->prefix('- ₡')
@@ -49,41 +64,40 @@ class ViewInvoice extends ViewRecord
                         ->label('Total')
                         ->prefix('₡')
                         ->weight(\Filament\Support\Enums\FontWeight::Bold)
-                        ->size(\Filament\Infolists\Components\TextEntry\TextEntrySize::Large)
-                        ->state(fn ($record): string => number_format(
-                            (float) $record->service_cost - (float) $record->discount_amount + (float) $record->delivery_fee,
-                            2
-                        )),
+                        ->size(\Filament\Infolists\Components\TextEntry\TextEntrySize::Large),
                     Infolists\Components\TextEntry::make('points_earned')
                         ->label('Puntos otorgados')->suffix(' pts'),
                 ]),
 
-            Infolists\Components\Section::make('Paquete')
-                ->columns(3)
+            Infolists\Components\Section::make('Paquetes incluidos')
                 ->schema([
-                    Infolists\Components\TextEntry::make('tracking')
-                        ->label('Tracking')->fontFamily('mono')->copyable(),
-                    Infolists\Components\TextEntry::make('user.name')->label('Cliente'),
-                    Infolists\Components\TextEntry::make('user.locker_code')
-                        ->label('Casillero')->badge()->fontFamily('mono'),
-                    Infolists\Components\TextEntry::make('description')
-                        ->label('Descripción')->columnSpanFull(),
-                    Infolists\Components\TextEntry::make('weight')
-                        ->label('Peso')->suffix(' lbs')->placeholder('—'),
-                    Infolists\Components\TextEntry::make('shippingMethod.name')
-                        ->label('Método de envío'),
-                    Infolists\Components\TextEntry::make('status')
-                        ->label('Estado')->badge()
-                        ->formatStateUsing(fn (string $state): string => PackageResource::statusLabel($state))
-                        ->color(fn (string $state): string => PackageResource::statusColor($state)),
+                    Infolists\Components\RepeatableEntry::make('packages')
+                        ->label('')
+                        ->columns(5)
+                        ->schema([
+                            Infolists\Components\TextEntry::make('tracking')
+                                ->label('Tracking')->fontFamily('mono')->copyable(),
+                            Infolists\Components\TextEntry::make('description')
+                                ->label('Descripción'),
+                            Infolists\Components\TextEntry::make('weight')
+                                ->label('Peso')->suffix(' kg')->placeholder('—'),
+                            Infolists\Components\TextEntry::make('service_cost')
+                                ->label('Costo')->prefix('₡'),
+                            Infolists\Components\TextEntry::make('shippingMethod.name')
+                                ->label('Método'),
+                        ]),
                 ]),
 
             Infolists\Components\Section::make('Cliente')
                 ->columns(3)
                 ->schema([
+                    Infolists\Components\TextEntry::make('user.name')
+                        ->label('Nombre'),
                     Infolists\Components\TextEntry::make('user.email')->label('Correo'),
                     Infolists\Components\TextEntry::make('user.phone')
                         ->label('Teléfono')->placeholder('—'),
+                    Infolists\Components\TextEntry::make('user.locker_code')
+                        ->label('Casillero')->badge()->fontFamily('mono'),
                     Infolists\Components\TextEntry::make('user.address')
                         ->label('Dirección')->placeholder('—'),
                     Infolists\Components\TextEntry::make('user.distrito.name')

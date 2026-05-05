@@ -27,6 +27,7 @@ class Package extends Model
         'invoice_number',
         'invoice_generated_at',
         'points_earned',
+        'invoice_id',
     ];
 
     protected function casts(): array
@@ -45,7 +46,7 @@ class Package extends Model
 
     public function hasInvoice(): bool
     {
-        return $this->invoice_number !== null;
+        return $this->invoice_id !== null;
     }
 
     public function user(): BelongsTo
@@ -56,6 +57,11 @@ class Package extends Model
     public function shippingMethod(): BelongsTo
     {
         return $this->belongsTo(ShippingMethod::class);
+    }
+
+    public function invoice(): BelongsTo
+    {
+        return $this->belongsTo(Invoice::class);
     }
 
     public function statusHistories(): HasMany

@@ -3,16 +3,18 @@
 namespace App\Services\DbService;
 
 use App\Events\InvoiceGenerated;
+use App\Models\Invoice;
 use App\Models\Package;
 use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class InvoiceService
 {
     public function generateInvoiceNumber(): string
     {
-        $max = Package::whereNotNull('invoice_number')->max('invoice_number');
+        $max = Invoice::max('invoice_number');
 
         if (! $max) {
             return $this->formatInvoiceNumber(1);
@@ -23,12 +25,9 @@ class InvoiceService
         return $this->formatInvoiceNumber($number + 1);
     }
 
-    public function isFirstInvoice(User $user, Package $currentPackage): bool
+    public function isFirstInvoice(User $user): bool
     {
-        return ! Package::where('user_id', $user->id)
-            ->where('id', '!=', $currentPackage->id)
-            ->whereNotNull('invoice_number')
-            ->exists();
+        return ! Invoice::where('user_id', $user->id)->exists();
     }
 
     public function calculateDiscount(float $serviceCost, bool $applyDiscount): float
@@ -41,37 +40,66 @@ class InvoiceService
         return (int) round($totalAfterDiscount * 0.01);
     }
 
-    public function generateAndPersistInvoice(Package $package, float $serviceCost, int $adminId, float $deliveryFee = 0.0): Package
-    {
-        DB::transaction(function () use ($package, $serviceCost, $deliveryFee): void {
-            $invoiceNumber = $this->generateInvoiceNumber();
-            $isFirst = $this->isFirstInvoice($package->user, $package);
-            $discount = $this->calculateDiscount($serviceCost, $isFirst);
-            $total = $serviceCost - $discount + $deliveryFee;
+    /**
+     * Generate an invoice for multiple packages from the same user.
+     *
+     * @param User $user
+     * @param Collection $packages
+     * @param float $deliveryFee
+     * @param int $adminId
+     * @return Invoice
+     */
+    public function generateAndPersistInvoice(
+        User $user,
+        Collection $packages,
+        float $deliveryFee,
+        int $adminId
+    ): Invoice {
+        $invoice = DB::transaction(function () use ($user, $packages, $deliveryFee, $adminId): Invoice {
+            $subtotal = $packages->sum('service_cost');
+            $isFirst = $this->isFirstInvoice($user);
+            $discount = $this->calculateDiscount($subtotal, $isFirst);
+            $total = $subtotal - $discount + $deliveryFee;
             $points = $this->calculatePoints($total);
 
-            $package->update([
-                'service_cost' => $serviceCost,
+            $invoiceNumber = $this->generateInvoiceNumber();
+
+            // Create invoice record
+            $invoice = Invoice::create([
+                'invoice_number' => $invoiceNumber,
+                'user_id' => $user->id,
+                'created_by' => $adminId,
+                'subtotal' => $subtotal,
                 'discount_amount' => $discount,
                 'delivery_fee' => $deliveryFee,
-                'invoice_number' => $invoiceNumber,
-                'invoice_generated_at' => now(),
+                'total' => $total,
                 'points_earned' => $points,
+                'generated_at' => now(),
             ]);
+
+            // Assign packages to invoice
+            foreach ($packages as $package) {
+                $package->update(['invoice_id' => $invoice->id]);
+            }
+
+            return $invoice;
         });
 
-        $package->refresh();
+        InvoiceGenerated::dispatch($invoice);
 
-        InvoiceGenerated::dispatch($package);
-
-        return $package;
+        return $invoice;
     }
 
-    public function buildPdf(Package $package): \Barryvdh\DomPDF\PDF
+    public function resendInvoice(Invoice $invoice): void
     {
-        $package->load(['user.provincia', 'user.canton', 'user.distrito', 'shippingMethod']);
+        InvoiceGenerated::dispatch($invoice);
+    }
 
-        return Pdf::loadView('pdfs.invoice', compact('package'))->setPaper('letter', 'portrait');
+    public function buildPdf(Invoice $invoice): \Barryvdh\DomPDF\PDF
+    {
+        $invoice->load(['user.provincia', 'user.canton', 'user.distrito', 'packages.shippingMethod']);
+
+        return Pdf::loadView('pdfs.invoice', compact('invoice'))->setPaper('letter', 'portrait');
     }
 
     private function formatInvoiceNumber(int $number): string
