@@ -21,16 +21,17 @@ class SyncPrealertWithExternalApi implements ShouldQueue
     public function handle(PackagePrealerted $event): void
     {
         $package = $event->package;
+        
 
         try {
-            $response = Http::timeout(15)->post(self::API_URL, [
-                'action'      => 'createPreAlertSQ',
-                'descripcion' => $package->description,
-                'seguimiento' => $package->tracking,
+            $response = Http::timeout(15)->asMultipart()->post(self::API_URL, [
+                ['name' => 'action',      'contents' => 'createPreAlertSQ'],
+                ['name' => 'descripcion', 'contents' => $package->description],
+                ['name' => 'seguimiento', 'contents' => $package->tracking],
             ]);
 
-            dd($response->body());
-
+            $body = $response->json();
+            
             $mensaje = $body['mensaje'] ?? null;
 
             if (in_array($mensaje, self::EXPECTED_MESSAGES, true)) {
