@@ -63,6 +63,7 @@ class UserResource extends Resource
                         'admin' => 'Admin',
                         'user' => 'Usuario',
                     ])
+                    ->default('user')
                     ->required(),
 
                 Forms\Components\TextInput::make('phone')
@@ -80,10 +81,11 @@ class UserResource extends Resource
                     ->default(true),
 
                 Forms\Components\TextInput::make('locker_code')
-                    ->label('Código de Casillero')
-                    ->disabled()
-                    ->dehydrated(false)
-                    ->hiddenOn('create'),
+                    ->label('Código de Casillero (opcional)')
+                    ->nullable()
+                    ->placeholder('Dejar en blanco para generar automáticamente')
+                    ->unique(ignoreRecord: true)
+                    ->disabledOn('edit'),
             ]);
     }
 

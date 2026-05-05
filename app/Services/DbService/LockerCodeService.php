@@ -10,7 +10,8 @@ class LockerCodeService
     /**
      * Generate the next sequential locker code.
      * Format: SQE00001, SQE00002, SQE00003, etc.
-     * 
+     * Ensures the generated code doesn't already exist in the database.
+     *
      * @return string
      */
     public function generateNextLockerCode(): string
@@ -22,13 +23,18 @@ class LockerCodeService
 
         // If no locker code exists, start with SQE00001
         if (!$lastUser) {
-            return $this->formatLockerCode(1);
+            $nextNumber = 1;
+        } else {
+            // Extract the number from the last locker code
+            $lastNumber = $this->extractNumberFromCode($lastUser->locker_code);
+            // Increment for the new locker code
+            $nextNumber = $lastNumber + 1;
         }
 
-        // Extract the number from the last locker code
-        $lastNumber = $this->extractNumberFromCode($lastUser->locker_code);
-        // Increment and format the new locker code
-        $nextNumber = $lastNumber + 1;
+        // Ensure the generated code doesn't already exist
+        while (User::where('locker_code', $this->formatLockerCode($nextNumber))->exists()) {
+            $nextNumber++;
+        }
 
         return $this->formatLockerCode($nextNumber);
     }
