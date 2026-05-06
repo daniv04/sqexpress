@@ -14,10 +14,11 @@ class AdminUserSeeder extends Seeder
         }
 
         User::create([
-            'name'     => 'Admin',
-            'email'    => 'josedavilo0408@gmail.com',
-            'password' => bcrypt('adminsqexpress'),
-            'role'     => 'admin',
+            'name'        => 'Admin',
+            'email'       => 'josedavilo0408@gmail.com',
+            'password'    => bcrypt('adminsqexpress'),
+            'role'        => 'admin',
+            'locker_code' => 'ADMIN',
         ]);
     }
 }
