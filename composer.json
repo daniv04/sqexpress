@@ -85,6 +85,7 @@
             "php-http/discovery": true
         },
         "platform": {
+            "php": "8.4.0",
             "ext-intl": "8.4",
             "ext-zip": "8.4"
         }
