@@ -84,8 +84,7 @@ class UserResource extends Resource
                     ->label('Código de Casillero (opcional)')
                     ->nullable()
                     ->placeholder('Dejar en blanco para generar automáticamente')
-                    ->unique(ignoreRecord: true)
-                    ->disabledOn('edit'),
+                    ->unique(ignoreRecord: true),
             ]);
     }
 
