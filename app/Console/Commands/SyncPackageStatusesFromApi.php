@@ -57,11 +57,11 @@ class SyncPackageStatusesFromApi extends Command
             return self::FAILURE;
         }
 
-        // Build lookup: tracking => [estado, pesoFinal]
+        // Build lookup: tracking (uppercase) => [estado, pesoFinal]
         $apiLookup = [];
         foreach ($apiData as $item) {
             if (isset($item['seguimiento'])) {
-                $apiLookup[$item['seguimiento']] = $item;
+                $apiLookup[strtoupper($item['seguimiento'])] = $item;
             }
         }
 
@@ -75,12 +75,12 @@ class SyncPackageStatusesFromApi extends Command
         $skipped = 0;
 
         foreach ($packages as $package) {
-            if (! isset($apiLookup[$package->tracking])) {
+            if (! isset($apiLookup[strtoupper($package->tracking)])) {
                 $skipped++;
                 continue; // Not in API yet (not received in Miami)
             }
 
-            $apiItem = $apiLookup[$package->tracking];
+            $apiItem = $apiLookup[strtoupper($package->tracking)];
             $apiEstado = $apiItem['estado'] ?? null;
 
             if (! isset(self::API_STATE_MAP[$apiEstado])) {
