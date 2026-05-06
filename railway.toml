@@ -7,5 +7,5 @@ PHP_EXTENSIONS = "ctype curl dom fileinfo filter hash mbstring openssl pcre pdo 
 [deploy]
 startCommand = "php artisan migrate --force && php artisan db:seed --class=GeodataSeeder --force && php artisan config:cache && php artisan route:cache && php artisan view:cache && php artisan serve --host=0.0.0.0 --port=$PORT"
 healthcheckPath = "/login"
-healthcheckTimeout = 60
+healthcheckTimeout = 120
 restartPolicyType = "on_failure"
