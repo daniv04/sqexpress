@@ -16,6 +16,10 @@ class GeodataSeeder extends Seeder
      */
     public function run(): void
     {
+        if (Provincia::exists()) {
+            return;
+        }
+
         // Leer el archivo JSON
         $jsonPath = database_path('data/geodata.json');
         $geodata = json_decode(File::get($jsonPath), true);
