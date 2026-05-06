@@ -124,6 +124,13 @@ class UserResource extends Resource
                         default => $state,
                     }),
 
+                Tables\Columns\TextColumn::make('total_points')
+                    ->label('Puntos')
+                    ->badge()
+                    ->color('warning')
+                    ->suffix(' pts')
+                    ->sortable(false),
+
                 Tables\Columns\IconColumn::make('active')
                     ->label('Activo')
                     ->boolean(),
