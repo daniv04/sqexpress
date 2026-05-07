@@ -36,6 +36,7 @@ class User extends Authenticatable implements FilamentUser
             'distrito_id',
         'locker_code',
         'active',
+        'loyalty_points',
     ];
 
     /**
@@ -94,7 +95,7 @@ class User extends Authenticatable implements FilamentUser
 
     public function getTotalPointsAttribute(): int
     {
-        return (int) $this->invoices()->sum('points_earned');
+        return (int) ($this->loyalty_points ?? 0);
     }
 
     public function invoices(): HasMany

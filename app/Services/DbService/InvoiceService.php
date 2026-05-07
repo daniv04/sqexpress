@@ -82,6 +82,8 @@ class InvoiceService
                 $package->update(['invoice_id' => $invoice->id]);
             }
 
+            $user->increment('loyalty_points', $points);
+
             return $invoice;
         });
 

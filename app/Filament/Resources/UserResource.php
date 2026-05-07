@@ -85,6 +85,14 @@ class UserResource extends Resource
                     ->nullable()
                     ->placeholder('Dejar en blanco para generar automáticamente')
                     ->unique(ignoreRecord: true),
+
+                Forms\Components\TextInput::make('loyalty_points')
+                    ->label('Puntos de Fidelidad')
+                    ->numeric()
+                    ->integer()
+                    ->minValue(0)
+                    ->default(0)
+                    ->visibleOn('edit'),
             ]);
     }
 
