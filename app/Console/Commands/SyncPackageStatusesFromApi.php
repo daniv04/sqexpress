@@ -35,12 +35,14 @@ class SyncPackageStatusesFromApi extends Command
 
     public function handle(PackageService $packageService): int
     {
+        
         $this->info('Consultando API externa...');
 
         try {
-            $response = Http::timeout(30)->post(self::API_URL, [
+            $response = Http::timeout(30)->asForm()->post(self::API_URL, [
                 'action' => 'readTrackingStatusSQ',
             ]);
+            
 
             if (! $response->successful()) {
                 $this->fail("API respondió con código {$response->status()}");
@@ -50,6 +52,11 @@ class SyncPackageStatusesFromApi extends Command
             }
 
             $apiData = $response->json();
+
+            if (! is_array($apiData)) {
+                $this->fail('La API devolvió una respuesta inesperada: ' . $response->body());
+                return self::FAILURE;
+            }
         } catch (\Throwable $e) {
             Log::error('SyncPackageStatusesFromApi: error al llamar API', ['error' => $e->getMessage()]);
             $this->notifyAdmins('Error al sincronizar estados', "No se pudo conectar con la API: {$e->getMessage()}");
@@ -64,6 +71,7 @@ class SyncPackageStatusesFromApi extends Command
                 $apiLookup[strtoupper($item['seguimiento'])] = $item;
             }
         }
+        
 
         $this->info('Paquetes en API: ' . count($apiLookup));
 
