@@ -9,6 +9,5 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('packages:sync-statuses')
-    ->everyFifteenMinutes()
-    ->withoutOverlapping()
-    ->runInBackground();
+    ->everyMinute()
+    ->withoutOverlapping();
