@@ -5,6 +5,8 @@ namespace App\Filament\Pages;
 use App\Enums\PackageStatus;
 use App\Filament\Resources\PackageResource;
 use App\Models\Package;
+use Filament\Forms;
+use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Tables;
 use Filament\Tables\Concerns\InteractsWithTable;
@@ -74,6 +76,26 @@ class Inventario extends Page implements HasTable
                     ->label('Fecha llegada')
                     ->dateTime('d/m/Y H:i')
                     ->sortable(),
+            ])
+            ->actions([
+                Tables\Actions\Action::make('asignar_estante')
+                    ->label(fn (Package $record): string => blank($record->shelf_location) ? 'Asignar estante' : 'Editar estante')
+                    ->icon('heroicon-o-tag')
+                    ->color(fn (Package $record): string => blank($record->shelf_location) ? 'danger' : 'gray')
+                    ->form(fn (Package $record): array => [
+                        Forms\Components\TextInput::make('shelf_location')
+                            ->label('Estante')
+                            ->default($record->shelf_location)
+                            ->required()
+                            ->maxLength(100),
+                    ])
+                    ->action(function (Package $record, array $data): void {
+                        $record->update(['shelf_location' => trim($data['shelf_location'])]);
+                        Notification::make()
+                            ->title('Estante actualizado')
+                            ->success()
+                            ->send();
+                    }),
             ])
             ->defaultSort('updated_at', 'desc')
             ->striped()
