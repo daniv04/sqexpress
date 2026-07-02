@@ -35,4 +35,12 @@ return [
         ],
     ],
 
+    'mlclogistics' => [
+        'base_url' => env('MLC_API_BASE_URL', 'https://api.mlclogistics.site/api'),
+        'api_key' => env('MLC_API_KEY'),
+        'email' => env('MLC_API_EMAIL'),
+        'password' => env('MLC_API_PASSWORD'),
+        'default_codigo' => env('MLC_DEFAULT_CODIGO', 'SQECR04'),
+    ],
+
 ];
