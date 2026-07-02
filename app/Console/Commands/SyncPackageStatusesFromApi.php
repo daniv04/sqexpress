@@ -6,57 +6,45 @@ use App\Enums\PackageStatus;
 use App\Models\Package;
 use App\Models\User;
 use App\Services\DbService\PackageService;
+use App\Services\MlcLogisticsClient;
 use Filament\Notifications\Notification;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class SyncPackageStatusesFromApi extends Command
 {
     protected $signature = 'packages:sync-statuses';
 
-    protected $description = 'Sincroniza estados de paquetes consultando la API externa de logística';
-
-    private const API_URL = 'https://logis-tico.com/api';
+    protected $description = 'Sincroniza estados de paquetes consultando la API externa de mlclogistics';
 
     private const API_STATE_MAP = [
-        'Recibido en Miami'      => PackageStatus::RECEIVED_IN_WAREHOUSE,
-        'Vuelo Asignado'         => PackageStatus::ASSIGNED_FLIGHT,
-        'Aduana'                 => PackageStatus::RECEIVED_IN_CUSTOMS,
-        'Recibido en Costa Rica' => PackageStatus::RECEIVED_IN_BUSINESS,
+        'Manifiesto Programado' => PackageStatus::ASSIGNED_FLIGHT,
+        'En Transito a CR'      => PackageStatus::IN_TRANSIT,
+        'En Aduanas CR'         => PackageStatus::RECEIVED_IN_CUSTOMS,
+        'Entregado'             => PackageStatus::RECEIVED_IN_BUSINESS,
+    ];
+
+    private const IGNORED_API_STATUSES = [
+        'En Oficina Central',
+        'Entrega Programada',
+        'En ruta',
     ];
 
     private const SYNCABLE_STATUSES = [
         PackageStatus::PREALERTED->value,
         PackageStatus::RECEIVED_IN_WAREHOUSE->value,
         PackageStatus::ASSIGNED_FLIGHT->value,
+        PackageStatus::IN_TRANSIT->value,
         PackageStatus::RECEIVED_IN_CUSTOMS->value,
     ];
 
-    public function handle(PackageService $packageService): int
+    public function handle(PackageService $packageService, MlcLogisticsClient $mlc): int
     {
-        
         $this->info('Consultando API externa...');
 
         try {
-            $response = Http::timeout(30)->asForm()->post(self::API_URL, [
-                'action' => 'readTrackingStatusSQ',
-            ]);
-            
-
-            if (! $response->successful()) {
-                $this->fail("API respondió con código {$response->status()}");
-                $this->notifyAdmins('Error al sincronizar estados', "La API respondió con código HTTP {$response->status()}.");
-
-                return self::FAILURE;
-            }
-
-            $apiData = $response->json();
-
-            if (! is_array($apiData)) {
-                $this->fail('La API devolvió una respuesta inesperada: ' . $response->body());
-                return self::FAILURE;
-            }
+            $prealertas = $this->fetchAllPages($mlc, '/prealertas', 'prealertas');
+            $paquetes = $this->fetchAllPages($mlc, '/paquetes', 'paquetes');
         } catch (\Throwable $e) {
             Log::error('SyncPackageStatusesFromApi: error al llamar API', ['error' => $e->getMessage()]);
             $this->notifyAdmins('Error al sincronizar estados', "No se pudo conectar con la API: {$e->getMessage()}");
@@ -64,16 +52,23 @@ class SyncPackageStatusesFromApi extends Command
             return self::FAILURE;
         }
 
-        // Build lookup: tracking (uppercase) => [estado, pesoFinal]
-        $apiLookup = [];
-        foreach ($apiData as $item) {
-            if (isset($item['seguimiento'])) {
-                $apiLookup[strtoupper($item['seguimiento'])] = $item;
+        // Build lookups: tracking (uppercase) => item
+        $prealertasLookup = [];
+        foreach ($prealertas as $item) {
+            if (isset($item['numero_seguimiento'])) {
+                $prealertasLookup[strtoupper($item['numero_seguimiento'])] = $item;
             }
         }
-        
 
-        $this->info('Paquetes en API: ' . count($apiLookup));
+        $paquetesLookup = [];
+        foreach ($paquetes as $item) {
+            if (isset($item['tracking'])) {
+                $paquetesLookup[strtoupper($item['tracking'])] = $item;
+            }
+        }
+
+        $this->info('Prealertas en API: ' . count($prealertasLookup));
+        $this->info('Paquetes en API: ' . count($paquetesLookup));
 
         $packages = Package::whereIn('status', self::SYNCABLE_STATUSES)->get();
 
@@ -83,49 +78,104 @@ class SyncPackageStatusesFromApi extends Command
         $skipped = 0;
 
         foreach ($packages as $package) {
-            if (! isset($apiLookup[strtoupper($package->tracking)])) {
-                $skipped++;
-                continue; // Not in API yet (not received in Miami)
-            }
+            $tracking = strtoupper($package->tracking);
 
-            $apiItem = $apiLookup[strtoupper($package->tracking)];
-            $apiEstado = $apiItem['estado'] ?? null;
+            // Paquete ya recibido físicamente en bodega: la API de paquetes manda.
+            if (isset($paquetesLookup[$tracking])) {
+                if ($this->syncFromPaquete($package, $paquetesLookup[$tracking], $packageService)) {
+                    $updated++;
+                } else {
+                    $skipped++;
+                }
 
-            if (! isset(self::API_STATE_MAP[$apiEstado])) {
-                Log::warning('SyncPackageStatusesFromApi: estado desconocido en API', [
-                    'tracking' => $package->tracking,
-                    'estado'   => $apiEstado,
-                ]);
-                $skipped++;
                 continue;
             }
 
-            $targetStatus = self::API_STATE_MAP[$apiEstado];
+            // Todavía no hay paquete físico: solo puede avanzar de prealertado a recibido en bodega.
+            if ($package->status === PackageStatus::PREALERTED->value && isset($prealertasLookup[$tracking])) {
+                if ($this->syncFromPrealerta($package, $prealertasLookup[$tracking], $packageService)) {
+                    $updated++;
+                } else {
+                    $skipped++;
+                }
 
-            if ($this->ordinal($targetStatus->value) <= $this->ordinal($package->status)) {
-                $skipped++; // Manual change was ahead or same state — respect it
                 continue;
             }
 
-            // Advance step by step through the state machine
-            try {
-                $this->advanceToTarget($package, $targetStatus, $apiItem['pesoFinal'] ?? null, $packageService);
-                $updated++;
-            } catch (\Throwable $e) {
-                Log::warning('SyncPackageStatusesFromApi: error al actualizar paquete', [
-                    'tracking' => $package->tracking,
-                    'error'    => $e->getMessage(),
-                ]);
-                $this->notifyAdmins(
-                    'Error al sincronizar estado de paquete',
-                    "Paquete {$package->tracking}: {$e->getMessage()}"
-                );
-            }
+            $skipped++; // Not in API yet
         }
 
         $this->info("Actualizados: {$updated} | Omitidos: {$skipped}");
 
         return self::SUCCESS;
+    }
+
+    private function syncFromPaquete(Package $package, array $apiItem, PackageService $packageService): bool
+    {
+        $apiEstado = $apiItem['estatus'] ?? null;
+
+        if (in_array($apiEstado, self::IGNORED_API_STATUSES, true)) {
+            return false;
+        }
+
+        if (! isset(self::API_STATE_MAP[$apiEstado])) {
+            Log::warning('SyncPackageStatusesFromApi: estado desconocido en API', [
+                'tracking' => $package->tracking,
+                'estado'   => $apiEstado,
+            ]);
+
+            return false;
+        }
+
+        $targetStatus = self::API_STATE_MAP[$apiEstado];
+
+        if ($this->ordinal($targetStatus->value) <= $this->ordinal($package->status)) {
+            return false; // Manual change was ahead or same state — respect it
+        }
+
+        try {
+            $weight = $apiItem['peso_real'] ?? $apiItem['peso'] ?? null;
+            $this->advanceToTarget($package, $targetStatus, $weight, $packageService);
+
+            return true;
+        } catch (\Throwable $e) {
+            Log::warning('SyncPackageStatusesFromApi: error al actualizar paquete', [
+                'tracking' => $package->tracking,
+                'error'    => $e->getMessage(),
+            ]);
+            $this->notifyAdmins(
+                'Error al sincronizar estado de paquete',
+                "Paquete {$package->tracking}: {$e->getMessage()}"
+            );
+
+            return false;
+        }
+    }
+
+    private function syncFromPrealerta(Package $package, array $apiItem, PackageService $packageService): bool
+    {
+        if ((int) ($apiItem['estatus'] ?? 0) !== 1) {
+            return false; // Sigue prealertado del lado de MLC
+        }
+
+        try {
+            $packageService->updatePackageStatus(
+                package: $package,
+                newStatus: PackageStatus::RECEIVED_IN_WAREHOUSE->value,
+                changedBy: null,
+                note: 'Sincronizado automáticamente vía API',
+                shelfLocation: null,
+            );
+
+            return true;
+        } catch (\Throwable $e) {
+            Log::warning('SyncPackageStatusesFromApi: error al actualizar paquete', [
+                'tracking' => $package->tracking,
+                'error'    => $e->getMessage(),
+            ]);
+
+            return false;
+        }
     }
 
     private function advanceToTarget(
@@ -171,15 +221,32 @@ class SyncPackageStatusesFromApi extends Command
         }
     }
 
+    private function fetchAllPages(MlcLogisticsClient $mlc, string $path, string $itemsKey): array
+    {
+        $items = [];
+        $page = 1;
+
+        do {
+            $body = $mlc->http()->get($path, ['page' => $page])->throw()->json();
+
+            $items = array_merge($items, $body[$itemsKey] ?? []);
+            $pageCount = $body['pagination']['pageCount'] ?? 1;
+            $page++;
+        } while ($page <= $pageCount);
+
+        return $items;
+    }
+
     private function ordinal(string $status): int
     {
         return match ($status) {
             'prealerted'            => 0,
             'received_in_warehouse' => 1,
             'assigned_flight'       => 2,
-            'received_in_customs'   => 3,
-            'received_in_business'  => 4,
-            'ready_to_deliver'      => 5,
+            'in_transit'            => 3,
+            'received_in_customs'   => 4,
+            'received_in_business'  => 5,
+            'ready_to_deliver'      => 6,
             default                 => 99,
         };
     }
