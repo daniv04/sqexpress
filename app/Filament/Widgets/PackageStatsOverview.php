@@ -34,6 +34,10 @@ class PackageStatsOverview extends BaseWidget
                 ->icon('heroicon-o-paper-airplane')
                 ->color('info'),
 
+            Stat::make('En tránsito a CR', $counts->get(PackageStatus::IN_TRANSIT->value, 0))
+                ->icon('heroicon-o-globe-americas')
+                ->color('info'),
+
             Stat::make('En aduana CR', $counts->get(PackageStatus::RECEIVED_IN_CUSTOMS->value, 0))
                 ->icon('heroicon-o-shield-check')
                 ->color('warning'),

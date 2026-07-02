@@ -7,6 +7,7 @@ enum PackageStatus: string
     case PREALERTED = 'prealerted';
     case RECEIVED_IN_WAREHOUSE = 'received_in_warehouse';
     case ASSIGNED_FLIGHT = 'assigned_flight';
+    case IN_TRANSIT = 'in_transit';
     case RECEIVED_IN_CUSTOMS = 'received_in_customs';
     case RECEIVED_IN_BUSINESS = 'received_in_business';
     case READY_TO_DELIVER = 'ready_to_deliver';
@@ -19,6 +20,7 @@ enum PackageStatus: string
             self::PREALERTED            => 'Prealertado',
             self::RECEIVED_IN_WAREHOUSE => 'Recibido en Bodega',
             self::ASSIGNED_FLIGHT       => 'Vuelo Asignado',
+            self::IN_TRANSIT            => 'En Tránsito a CR',
             self::RECEIVED_IN_CUSTOMS   => 'Recibido en Aduana',
             self::RECEIVED_IN_BUSINESS  => 'Recibido en Oficina',
             self::READY_TO_DELIVER      => 'Listo para Entregar',
@@ -32,7 +34,8 @@ enum PackageStatus: string
         return match ($this) {
             self::PREALERTED => [self::RECEIVED_IN_WAREHOUSE, self::CANCELED],
             self::RECEIVED_IN_WAREHOUSE => [self::ASSIGNED_FLIGHT, self::CANCELED],
-            self::ASSIGNED_FLIGHT => [self::RECEIVED_IN_CUSTOMS, self::CANCELED],
+            self::ASSIGNED_FLIGHT => [self::IN_TRANSIT, self::CANCELED],
+            self::IN_TRANSIT => [self::RECEIVED_IN_CUSTOMS, self::CANCELED],
             self::RECEIVED_IN_CUSTOMS => [self::RECEIVED_IN_BUSINESS, self::CANCELED],
             self::RECEIVED_IN_BUSINESS => [self::READY_TO_DELIVER, self::CANCELED],
             self::READY_TO_DELIVER => [self::DELIVERED],

@@ -70,6 +70,7 @@ class PackageController extends Controller
             'prealerted' => 'Prealertado',
             'received_in_warehouse' => 'Recibido en Bodega',
             'assigned_flight' => 'Asignado a Vuelo',
+            'in_transit' => 'En Tránsito a CR',
             'received_in_customs' => 'Recibido en Aduanas',
             'received_in_business' => 'Recibido en Negocio',
             'ready_to_deliver' => 'Listo para Entregar',
@@ -78,7 +79,7 @@ class PackageController extends Controller
         ];
 
         $shippingMethods = ShippingMethod::where('active', true)->get();
-        
+
 
         return view('mis-paquetes', compact('packages', 'statuses', 'shippingMethods'));
     }
@@ -107,6 +108,7 @@ class PackageController extends Controller
             'prealerted' => 'Prealertado',
             'received_in_warehouse' => 'Recibido en Bodega',
             'assigned_flight' => 'Asignado a Vuelo',
+            'in_transit' => 'En Tránsito a CR',
             'received_in_customs' => 'Recibido en Aduanas',
             'received_in_business' => 'Recibido en Negocio',
             'ready_to_deliver' => 'Listo para Entregar',
