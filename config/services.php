@@ -40,7 +40,7 @@ return [
         'api_key' => env('MLC_API_KEY'),
         'email' => env('MLC_API_EMAIL'),
         'password' => env('MLC_API_PASSWORD'),
-        'default_codigo' => env('MLC_DEFAULT_CODIGO', 'SQECR04'),
+        'default_codigo' => env('MLC_DEFAULT_CODIGO', 'SQECR'),
     ],
 
 ];
