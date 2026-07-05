@@ -3,7 +3,9 @@
 namespace App\Services\DbService;
 
 use App\Enums\PackageStatus;
+use App\Events\PackageDeletedByAdmin;
 use App\Events\PackageStatusChanged;
+use App\Events\PackageUpdatedByAdmin;
 use App\Models\Package;
 use App\Models\PackageStatusHistory;
 use Illuminate\Support\Facades\DB;
@@ -80,5 +82,54 @@ class PackageService
         });
 
         PackageStatusChanged::dispatch($package, $fromStatus->value, $toStatus->value);
+    }
+
+    public function adminUpdatePackage(Package $package, array $data, ?int $changedBy = null): Package
+    {
+        $whitelist = ['tracking', 'description', 'weight', 'approx_value', 'shelf_location', 'shipping_method_id'];
+        $decimalFields = ['weight', 'approx_value'];
+
+        $filtered = array_intersect_key($data, array_flip($whitelist));
+
+        $changes = [];
+        foreach ($filtered as $field => $newValue) {
+            $oldValue = $package->getAttribute($field);
+
+            $isDifferent = in_array($field, $decimalFields, true)
+                ? round((float) $oldValue, 2) !== round((float) $newValue, 2)
+                : (string) $oldValue !== (string) $newValue;
+
+            if ($isDifferent) {
+                $changes[$field] = ['old' => $oldValue, 'new' => $newValue];
+            }
+        }
+
+        DB::transaction(function () use ($package, $filtered): void {
+            $package->update($filtered);
+        });
+
+        if (!empty($changes)) {
+            PackageUpdatedByAdmin::dispatch($package, $changes);
+        }
+
+        return $package;
+    }
+
+    public function adminDeletePackage(Package $package, ?int $deletedBy = null): void
+    {
+        if ($package->hasInvoice()) {
+            throw new DomainException('No se puede eliminar un paquete que ya pertenece a una factura.');
+        }
+
+        $tracking = $package->tracking;
+        $userEmail = $package->user->email;
+        $userName = $package->user->name;
+        $description = $package->description;
+
+        DB::transaction(function () use ($package): void {
+            $package->delete();
+        });
+
+        PackageDeletedByAdmin::dispatch($tracking, $userEmail, $userName, $description);
     }
 }

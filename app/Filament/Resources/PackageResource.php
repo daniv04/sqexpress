@@ -11,6 +11,7 @@ use App\Models\ShippingMethod;
 use App\Services\DbService\PackageService;
 use DomainException;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\HtmlString;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
@@ -227,6 +228,80 @@ class PackageResource extends Resource
                         PackageStatus::from($record->status)->nextAllowedStatuses()
                     )),
 
+                Tables\Actions\Action::make('editar')
+                    ->label('Editar')
+                    ->icon('heroicon-o-pencil-square')
+                    ->color('gray')
+                    ->authorize(fn (Package $record): bool => (bool) auth()->user()?->can('update', $record))
+                    ->visible(fn (): bool => auth()->user()?->role === 'admin')
+                    ->form(fn (): array => self::adminEditFormSchema())
+                    ->fillForm(fn (Package $record): array => [
+                        'tracking' => $record->tracking,
+                        'description' => $record->description,
+                        'weight' => $record->weight,
+                        'approx_value' => $record->approx_value,
+                        'shelf_location' => $record->shelf_location,
+                        'shipping_method_id' => $record->shipping_method_id,
+                    ])
+                    ->action(function (Package $record, array $data, $livewire): void {
+                        $livewire->mountTableAction('confirmar_edicion', $record->getKey(), ['data' => $data]);
+                    })
+                    ->registerModalActions([
+                        Tables\Actions\Action::make('confirmar_edicion')
+                            ->label('Confirmar cambios')
+                            ->requiresConfirmation()
+                            ->modalHeading('Confirmar edición del paquete')
+                            ->modalDescription(fn (Package $record, array $arguments): HtmlString => self::buildEditDiffDescription($record, $arguments['data'] ?? []))
+                            ->authorize(fn (Package $record): bool => (bool) auth()->user()?->can('update', $record))
+                            ->action(function (Package $record, array $arguments): void {
+                                $service = app(PackageService::class);
+                                $service->adminUpdatePackage($record, $arguments['data'] ?? [], Auth::id());
+
+                                Notification::make()
+                                    ->title('Paquete actualizado')
+                                    ->success()
+                                    ->send();
+                            }),
+                    ]),
+
+                Tables\Actions\Action::make('eliminar')
+                    ->label('Eliminar')
+                    ->icon('heroicon-o-trash')
+                    ->color('danger')
+                    ->authorize(fn (Package $record): bool => (bool) auth()->user()?->can('delete', $record))
+                    ->visible(fn (): bool => auth()->user()?->role === 'admin')
+                    ->requiresConfirmation()
+                    ->modalHeading('¿Seguro que deseas eliminar este paquete?')
+                    ->action(function (Package $record, $livewire): void {
+                        $livewire->mountTableAction('confirmar_eliminacion', $record->getKey());
+                    })
+                    ->registerModalActions([
+                        Tables\Actions\Action::make('confirmar_eliminacion')
+                            ->label('Eliminar definitivamente')
+                            ->color('danger')
+                            ->requiresConfirmation()
+                            ->modalHeading('Esta acción es irreversible')
+                            ->modalDescription('El paquete se eliminará permanentemente y no podrá recuperarse. El cliente será notificado por correo electrónico.')
+                            ->authorize(fn (Package $record): bool => (bool) auth()->user()?->can('delete', $record))
+                            ->action(function (Package $record): void {
+                                $service = app(PackageService::class);
+                                try {
+                                    $service->adminDeletePackage($record, Auth::id());
+
+                                    Notification::make()
+                                        ->title('Paquete eliminado')
+                                        ->success()
+                                        ->send();
+                                } catch (DomainException $e) {
+                                    Notification::make()
+                                        ->title('No se pudo eliminar')
+                                        ->body($e->getMessage())
+                                        ->danger()
+                                        ->send();
+                                }
+                            }),
+                    ]),
+
                 Tables\Actions\Action::make('crear_factura')
                     ->label('Crear Factura')
                     ->icon('heroicon-o-document-text')
@@ -258,6 +333,83 @@ class PackageResource extends Resource
     }
 
     // ── Helpers ────────────────────────────────────────────────────────────────
+
+    public static function adminEditFormSchema(): array
+    {
+        return [
+            Forms\Components\TextInput::make('tracking')
+                ->label('Tracking')
+                ->required()
+                ->unique(ignoreRecord: true)
+                ->maxLength(255),
+
+            Forms\Components\Select::make('shipping_method_id')
+                ->label('Método de envío')
+                ->options(ShippingMethod::where('active', true)->pluck('name', 'id'))
+                ->required(),
+
+            Forms\Components\TextInput::make('description')
+                ->label('Descripción')
+                ->required()
+                ->maxLength(500)
+                ->columnSpanFull(),
+
+            Forms\Components\TextInput::make('weight')
+                ->label('Peso (kg)')
+                ->numeric()
+                ->minValue(0),
+
+            Forms\Components\TextInput::make('approx_value')
+                ->label('Valor aprox. (USD)')
+                ->numeric()
+                ->minValue(0),
+
+            Forms\Components\TextInput::make('shelf_location')
+                ->label('Estante')
+                ->maxLength(100),
+        ];
+    }
+
+    private static function fieldLabel(string $field): string
+    {
+        return match ($field) {
+            'tracking' => 'Tracking',
+            'description' => 'Descripción',
+            'weight' => 'Peso (kg)',
+            'approx_value' => 'Valor aprox. (USD)',
+            'shelf_location' => 'Estante',
+            'shipping_method_id' => 'Método de envío',
+            default => $field,
+        };
+    }
+
+    private static function buildEditDiffDescription(Package $record, array $data): HtmlString
+    {
+        $whitelist = ['tracking', 'description', 'weight', 'approx_value', 'shelf_location', 'shipping_method_id'];
+        $decimalFields = ['weight', 'approx_value'];
+        $lines = [];
+
+        foreach (array_intersect_key($data, array_flip($whitelist)) as $field => $newValue) {
+            $oldValue = $record->getAttribute($field);
+
+            $isDifferent = in_array($field, $decimalFields, true)
+                ? round((float) $oldValue, 2) !== round((float) $newValue, 2)
+                : (string) $oldValue !== (string) $newValue;
+
+            if (! $isDifferent) {
+                continue;
+            }
+
+            if ($field === 'shipping_method_id') {
+                $oldValue = ShippingMethod::find($oldValue)?->name ?? $oldValue;
+                $newValue = ShippingMethod::find($newValue)?->name ?? $newValue;
+            }
+
+            $lines[] = e(self::fieldLabel($field)) . ': ' . e($oldValue) . ' → ' . e($newValue);
+        }
+
+        return new HtmlString($lines === [] ? 'No se detectaron cambios.' : implode('<br>', $lines));
+    }
 
     private static function nextStatusOptions(Package $record): array
     {
