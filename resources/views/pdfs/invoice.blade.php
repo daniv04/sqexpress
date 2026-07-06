@@ -18,12 +18,13 @@
         .client-box td { font-size: 12px; padding: 2px 0; }
         .client-box td:first-child { color: #6b7280; width: 120px; }
         .items-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-        .items-table th { background-color: #1d4ed8; color: white; padding: 8px 10px; text-align: left; font-size: 11px; }
+        .items-table th { background-color: #1d4ed8; color: white; padding: 6px 10px; text-align: left; font-size: 11px; }
         .items-table th.right { text-align: right; }
-        .items-table td { padding: 10px 10px; border-bottom: 1px solid #e5e7eb; font-size: 11px; vertical-align: top; }
+        .items-table td { padding: 5px 10px; border-bottom: 1px solid #e5e7eb; font-size: 11px; vertical-align: middle; white-space: nowrap; }
         .items-table td.right { text-align: right; }
+        .items-table tr:nth-child(even) { background-color: #f9fafb; }
         .items-table tr:last-child td { border-bottom: none; }
-        .item-desc { color: #6b7280; margin-top: 3px; line-height: 1.5; }
+        .type-badge { display: inline-block; background-color: #dbeafe; color: #1d4ed8; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: bold; }
         .totals-table { width: 280px; margin-left: auto; border-collapse: collapse; margin-bottom: 20px; }
         .totals-table td { padding: 4px 8px; font-size: 12px; }
         .totals-table td:last-child { text-align: right; }
@@ -107,31 +108,19 @@
     <table class="items-table">
         <thead>
             <tr>
-                <th style="width: 30px;">#</th>
-                <th>Artículo y Descripción</th>
-                <th class="right" style="width: 50px;">Cant</th>
-                <th class="right" style="width: 100px;">Tarifa</th>
-                <th class="right" style="width: 100px;">Total</th>
+                <th>Tracking</th>
+                <th>Tipo</th>
+                <th class="right" style="width: 90px;">Peso</th>
+                <th class="right" style="width: 110px;">Precio por unidad</th>
+                <th class="right" style="width: 110px;">Total</th>
             </tr>
         </thead>
         <tbody>
-            @foreach($invoice->packages as $i => $package)
+            @foreach($invoice->packages as $package)
             <tr>
-                <td>{{ $i + 1 }}</td>
-                <td>
-                    <strong>Servicio de envío</strong>
-                    <div class="item-desc">
-                        Tracking: {{ $package->tracking }}<br>
-                        @if($package->weight)
-                            Peso: {{ $package->weight }} kg<br>
-                        @endif
-                        @if($package->description)
-                            Descripción: {{ $package->description }}<br>
-                        @endif
-                        Método: {{ $package->shippingMethod?->name ?? 'N/A' }}
-                    </div>
-                </td>
-                <td class="right">1</td>
+                <td>{{ $package->tracking }}</td>
+                <td><span class="type-badge">{{ $package->shippingMethod?->name ?? 'N/A' }}</span></td>
+                <td class="right">{{ $package->weight ? number_format($package->weight, 2) . ' Kg' : '—' }}</td>
                 <td class="right">₡{{ number_format($package->service_cost, 2) }}</td>
                 <td class="right">₡{{ number_format($package->service_cost, 2) }}</td>
             </tr>
