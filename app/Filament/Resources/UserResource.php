@@ -42,7 +42,7 @@ class UserResource extends Resource
 
                 Forms\Components\TextInput::make('password')
                     ->password()
-                    ->minLength(8)
+                    ->minLength(5)
                     ->confirmed()
                     ->required(fn (string $context) => $context === 'create')
                     ->dehydrateStateUsing(fn ($state) => Hash::make($state))
