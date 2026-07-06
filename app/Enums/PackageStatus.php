@@ -9,6 +9,7 @@ enum PackageStatus: string
     case ASSIGNED_FLIGHT = 'assigned_flight';
     case IN_TRANSIT = 'in_transit';
     case RECEIVED_IN_CUSTOMS = 'received_in_customs';
+    case CUSTOMS_PROCESS_FINISHED = 'customs_process_finished';
     case RECEIVED_IN_BUSINESS = 'received_in_business';
     case READY_TO_DELIVER = 'ready_to_deliver';
     case DELIVERED = 'delivered';
@@ -22,6 +23,7 @@ enum PackageStatus: string
             self::ASSIGNED_FLIGHT       => 'Vuelo Asignado',
             self::IN_TRANSIT            => 'En Tránsito a CR',
             self::RECEIVED_IN_CUSTOMS   => 'Recibido en Aduana',
+            self::CUSTOMS_PROCESS_FINISHED => 'Procesos de Aduanas Finalizado',
             self::RECEIVED_IN_BUSINESS  => 'Recibido en Oficina',
             self::READY_TO_DELIVER      => 'Listo para Entregar',
             self::DELIVERED             => 'Entregado',
@@ -36,7 +38,8 @@ enum PackageStatus: string
             self::RECEIVED_IN_WAREHOUSE => [self::ASSIGNED_FLIGHT, self::CANCELED],
             self::ASSIGNED_FLIGHT => [self::IN_TRANSIT, self::CANCELED],
             self::IN_TRANSIT => [self::RECEIVED_IN_CUSTOMS, self::CANCELED],
-            self::RECEIVED_IN_CUSTOMS => [self::RECEIVED_IN_BUSINESS, self::CANCELED],
+            self::RECEIVED_IN_CUSTOMS => [self::CUSTOMS_PROCESS_FINISHED, self::CANCELED],
+            self::CUSTOMS_PROCESS_FINISHED => [self::RECEIVED_IN_BUSINESS, self::CANCELED],
             self::RECEIVED_IN_BUSINESS => [self::READY_TO_DELIVER, self::CANCELED],
             self::READY_TO_DELIVER => [self::DELIVERED],
             self::DELIVERED, self::CANCELED => [],

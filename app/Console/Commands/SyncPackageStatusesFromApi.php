@@ -21,11 +21,11 @@ class SyncPackageStatusesFromApi extends Command
         'Manifiesto Programado' => PackageStatus::ASSIGNED_FLIGHT,
         'En Transito a CR'      => PackageStatus::IN_TRANSIT,
         'En Aduanas CR'         => PackageStatus::RECEIVED_IN_CUSTOMS,
+        'En Oficina Central'    => PackageStatus::CUSTOMS_PROCESS_FINISHED,
         'Entregado'             => PackageStatus::RECEIVED_IN_BUSINESS,
     ];
 
     private const IGNORED_API_STATUSES = [
-        'En Oficina Central',
         'Entrega Programada',
         'En ruta',
     ];
@@ -36,6 +36,7 @@ class SyncPackageStatusesFromApi extends Command
         PackageStatus::ASSIGNED_FLIGHT->value,
         PackageStatus::IN_TRANSIT->value,
         PackageStatus::RECEIVED_IN_CUSTOMS->value,
+        PackageStatus::CUSTOMS_PROCESS_FINISHED->value,
     ];
 
     public function handle(PackageService $packageService, MlcLogisticsClient $mlc): int
@@ -247,9 +248,10 @@ class SyncPackageStatusesFromApi extends Command
             'received_in_warehouse' => 1,
             'assigned_flight'       => 2,
             'in_transit'            => 3,
-            'received_in_customs'   => 4,
-            'received_in_business'  => 5,
-            'ready_to_deliver'      => 6,
+            'received_in_customs'      => 4,
+            'customs_process_finished' => 5,
+            'received_in_business'     => 6,
+            'ready_to_deliver'         => 7,
             default                 => 99,
         };
     }

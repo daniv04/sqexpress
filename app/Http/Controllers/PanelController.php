@@ -21,6 +21,7 @@ class PanelController extends Controller
             'assigned_flight' => 'Asignado a Vuelo',
             'in_transit' => 'En Tránsito a CR',
             'received_in_customs' => 'Recibido en Aduanas',
+            'customs_process_finished' => 'Procesos de Aduanas Finalizado',
             'received_in_business' => 'Recibido en Negocio',
             'ready_to_deliver' => 'Listo para Entregar',
             'delivered' => 'Entregado',

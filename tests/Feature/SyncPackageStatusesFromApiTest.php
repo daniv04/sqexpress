@@ -182,8 +182,8 @@ class SyncPackageStatusesFromApiTest extends TestCase
 
         $this->artisan('packages:sync-statuses')->assertSuccessful();
 
-        // prealerted→warehouse→flight→in_transit→customs→business = 5 transiciones
-        $this->assertCount(5, $package->statusHistories()->get());
+        // prealerted→warehouse→flight→in_transit→customs→customs_process_finished→business = 6 transiciones
+        $this->assertCount(6, $package->statusHistories()->get());
     }
 
     // -------------------------------------------------------------------------
@@ -279,12 +279,25 @@ class SyncPackageStatusesFromApiTest extends TestCase
         $package = $this->makePackage('TRK015', 'received_in_customs');
 
         $this->fakeMlc(paquetes: [
-            ['tracking' => 'TRK015', 'estatus' => 'En Oficina Central', 'peso_real' => 1.0],
+            ['tracking' => 'TRK015', 'estatus' => 'Entrega Programada', 'peso_real' => 1.0],
         ]);
 
         $this->artisan('packages:sync-statuses')->assertSuccessful();
 
         $this->assertEquals('received_in_customs', $package->refresh()->status);
+    }
+
+    public function test_advances_received_in_customs_to_customs_process_finished(): void
+    {
+        $package = $this->makePackage('TRK017', 'received_in_customs');
+
+        $this->fakeMlc(paquetes: [
+            ['tracking' => 'TRK017', 'estatus' => 'En Oficina Central', 'peso_real' => 1.0],
+        ]);
+
+        $this->artisan('packages:sync-statuses')->assertSuccessful();
+
+        $this->assertEquals('customs_process_finished', $package->refresh()->status);
     }
 
     // -------------------------------------------------------------------------

@@ -42,6 +42,10 @@ class PackageStatsOverview extends BaseWidget
                 ->icon('heroicon-o-shield-check')
                 ->color('warning'),
 
+            Stat::make('Procesos de aduanas finalizado', $counts->get(PackageStatus::CUSTOMS_PROCESS_FINISHED->value, 0))
+                ->icon('heroicon-o-clipboard-document-check')
+                ->color('warning'),
+
             Stat::make('En empresa', $counts->get(PackageStatus::RECEIVED_IN_BUSINESS->value, 0))
                 ->icon('heroicon-o-home-modern')
                 ->color('warning'),
