@@ -118,7 +118,12 @@ class SyncPackageStatusesFromApi extends Command
             return false;
         }
 
-        if (! isset(self::API_STATE_MAP[$apiEstado])) {
+        if (is_string($apiEstado) && str_starts_with($apiEstado, 'Recibido en')) {
+            // El nombre de la bodega varía ("Recibido en San José", "Recibido en {bodega}", etc.)
+            $targetStatus = PackageStatus::RECEIVED_IN_WAREHOUSE;
+        } elseif (isset(self::API_STATE_MAP[$apiEstado])) {
+            $targetStatus = self::API_STATE_MAP[$apiEstado];
+        } else {
             Log::warning('SyncPackageStatusesFromApi: estado desconocido en API', [
                 'tracking' => $package->tracking,
                 'estado'   => $apiEstado,
@@ -126,8 +131,6 @@ class SyncPackageStatusesFromApi extends Command
 
             return false;
         }
-
-        $targetStatus = self::API_STATE_MAP[$apiEstado];
 
         if ($this->ordinal($targetStatus->value) <= $this->ordinal($package->status)) {
             return false; // Manual change was ahead or same state — respect it
