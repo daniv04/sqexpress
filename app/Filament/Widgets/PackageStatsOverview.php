@@ -30,7 +30,7 @@ class PackageStatsOverview extends BaseWidget
                 ->icon('heroicon-o-building-storefront')
                 ->color('info'),
 
-            Stat::make('Vuelo asignado', $counts->get(PackageStatus::ASSIGNED_FLIGHT->value, 0))
+            Stat::make('Asignado a vuelo', $counts->get(PackageStatus::ASSIGNED_FLIGHT->value, 0))
                 ->icon('heroicon-o-paper-airplane')
                 ->color('info'),
 

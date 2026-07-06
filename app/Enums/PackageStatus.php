@@ -20,7 +20,7 @@ enum PackageStatus: string
         return match ($this) {
             self::PREALERTED            => 'Prealertado',
             self::RECEIVED_IN_WAREHOUSE => 'Recibido en Bodega',
-            self::ASSIGNED_FLIGHT       => 'Vuelo Asignado',
+            self::ASSIGNED_FLIGHT       => 'Asignado a Vuelo',
             self::IN_TRANSIT            => 'En Tránsito a CR',
             self::RECEIVED_IN_CUSTOMS   => 'Recibido en Aduana',
             self::CUSTOMS_PROCESS_FINISHED => 'Procesos de Aduanas Finalizado',
