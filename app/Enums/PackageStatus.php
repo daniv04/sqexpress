@@ -23,7 +23,7 @@ enum PackageStatus: string
             self::ASSIGNED_FLIGHT       => 'Asignado a Vuelo',
             self::IN_TRANSIT            => 'En Tránsito a CR',
             self::RECEIVED_IN_CUSTOMS   => 'Recibido en Aduana',
-            self::CUSTOMS_PROCESS_FINISHED => 'Procesos de Aduanas Finalizado',
+            self::CUSTOMS_PROCESS_FINISHED => 'Proceso de Aduanas Finalizado con Éxito',
             self::RECEIVED_IN_BUSINESS  => 'Recibido en Oficina',
             self::READY_TO_DELIVER      => 'Listo para Entregar',
             self::DELIVERED             => 'Entregado',
