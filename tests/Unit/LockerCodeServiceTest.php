@@ -26,7 +26,7 @@ class LockerCodeServiceTest extends TestCase
     {
         $code = $this->service->generateNextLockerCode();
 
-        $this->assertEquals('SQE00001', $code);
+        $this->assertEquals('SQE01', $code);
     }
 
     /**
@@ -35,11 +35,11 @@ class LockerCodeServiceTest extends TestCase
     public function test_generates_next_locker_code_based_on_last_user(): void
     {
         // Crear un usuario con locker_code
-        User::factory()->create(['locker_code' => 'SQE00005']);
+        User::factory()->create(['locker_code' => 'SQE05']);
 
         $code = $this->service->generateNextLockerCode();
 
-        $this->assertEquals('SQE00006', $code);
+        $this->assertEquals('SQE06', $code);
     }
 
     /**
@@ -48,15 +48,15 @@ class LockerCodeServiceTest extends TestCase
     public function test_generates_correct_code_with_multiple_users(): void
     {
         // Crear varios usuarios con diferentes locker_codes
-        User::factory()->create(['locker_code' => 'SQE00001']);
-        User::factory()->create(['locker_code' => 'SQE00003']);
-        User::factory()->create(['locker_code' => 'SQE00010']);
+        User::factory()->create(['locker_code' => 'SQE01']);
+        User::factory()->create(['locker_code' => 'SQE03']);
+        User::factory()->create(['locker_code' => 'SQE10']);
         User::factory()->create(['locker_code' => null]); // Usuario sin código
 
         $code = $this->service->generateNextLockerCode();
 
-        // Debe tomar el más alto (SQE00010) e incrementar
-        $this->assertEquals('SQE00011', $code);
+        // Debe tomar el más alto (SQE10) e incrementar
+        $this->assertEquals('SQE11', $code);
     }
 
     /**
@@ -76,13 +76,13 @@ class LockerCodeServiceTest extends TestCase
      */
     public function test_handles_malformed_locker_codes(): void
     {
-        User::factory()->create(['locker_code' => 'SQE00005']);
+        User::factory()->create(['locker_code' => 'SQE05']);
         User::factory()->create(['locker_code' => 'INVALID123']);
         User::factory()->create(['locker_code' => 'ABC00010']);
 
         $code = $this->service->generateNextLockerCode();
 
-        $this->assertEquals('SQE00006', $code);
+        $this->assertEquals('SQE06', $code);
     }
 
     /**
@@ -90,23 +90,23 @@ class LockerCodeServiceTest extends TestCase
      */
     public function test_handles_non_sequential_codes(): void
     {
-        User::factory()->create(['locker_code' => 'SQE00001']);
-        User::factory()->create(['locker_code' => 'SQE00099']);
-        User::factory()->create(['locker_code' => 'SQE00005']);
+        User::factory()->create(['locker_code' => 'SQE01']);
+        User::factory()->create(['locker_code' => 'SQE99']);
+        User::factory()->create(['locker_code' => 'SQE05']);
 
         $code = $this->service->generateNextLockerCode();
 
-        $this->assertEquals('SQE00100', $code);
+        $this->assertEquals('SQE100', $code);
     }
 
     /**
-     * Test que el formato siempre tiene 5 dígitos mínimo.
+     * Test que el formato siempre tiene 2 dígitos mínimo.
      */
-    public function test_code_format_always_has_minimum_five_digits(): void
+    public function test_code_format_always_has_minimum_two_digits(): void
     {
         $code = $this->service->generateNextLockerCode();
 
-        $this->assertMatchesRegularExpression('/^SQE\d{5,}$/', $code);
+        $this->assertMatchesRegularExpression('/^SQE\d{2,}$/', $code);
     }
 
     /**
@@ -118,7 +118,7 @@ class LockerCodeServiceTest extends TestCase
 
         $code = $this->service->generateNextLockerCode();
 
-        $this->assertEquals('SQE00001', $code);
+        $this->assertEquals('SQE01', $code);
     }
 
     /**
@@ -134,8 +134,8 @@ class LockerCodeServiceTest extends TestCase
 
         $code3 = $this->service->generateNextLockerCode();
 
-        $this->assertEquals('SQE00001', $code1);
-        $this->assertEquals('SQE00002', $code2);
-        $this->assertEquals('SQE00003', $code3);
+        $this->assertEquals('SQE01', $code1);
+        $this->assertEquals('SQE02', $code2);
+        $this->assertEquals('SQE03', $code3);
     }
 }
