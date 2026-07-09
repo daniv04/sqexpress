@@ -121,8 +121,8 @@
                 <td>{{ $package->tracking }}</td>
                 <td><span class="type-badge">{{ $package->shippingMethod?->name ?? 'N/A' }}</span></td>
                 <td class="right">{{ $package->weight ? number_format($package->weight, 2) . ' Kg' : '—' }}</td>
-                <td class="right">₡{{ number_format($package->service_cost, 2) }}</td>
-                <td class="right">₡{{ number_format($package->service_cost, 2) }}</td>
+                <td class="right">${{ number_format($package->service_cost, 2) }}</td>
+                <td class="right">${{ number_format($package->service_cost, 2) }}</td>
             </tr>
             @endforeach
         </tbody>
@@ -132,29 +132,29 @@
     <table class="totals-table">
         <tr>
             <td style="color: #6b7280;">Subtotal:</td>
-            <td>₡{{ number_format($invoice->subtotal, 2) }}</td>
+            <td>${{ number_format($invoice->subtotal, 2) }}</td>
         </tr>
         @if($invoice->discount_amount > 0)
         <tr>
             <td style="color: #15803d;">Descuento (10% — cliente nuevo):</td>
-            <td style="color: #15803d;">- ₡{{ number_format($invoice->discount_amount, 2) }}</td>
+            <td style="color: #15803d;">- ${{ number_format($invoice->discount_amount, 2) }}</td>
         </tr>
         @endif
         @if($invoice->delivery_fee > 0)
         <tr>
             <td style="color: #6b7280;">Cargo por entrega:</td>
-            <td>₡{{ number_format($invoice->delivery_fee, 2) }}</td>
+            <td>${{ number_format($invoice->delivery_fee, 2) }}</td>
         </tr>
         @endif
         <tr class="total">
             <td>Total:</td>
-            <td>₡{{ number_format($invoice->total, 2) }}</td>
+            <td>${{ number_format($invoice->total, 2) }}</td>
         </tr>
     </table>
 
     {{-- FOOTER --}}
     <div class="footer-note">
-        * Los puntos obtenidos son el 1% del total a pagar ({{ $invoice->points_earned }} puntos).<br>
+        * Los puntos otorgados son 1 por cada $1 del total a pagar ({{ $invoice->points_earned }} puntos).<br>
         @if($invoice->discount_amount > 0)
         * Descuento del 10% aplicado por ser tu primera factura con SQExpress.<br>
         @endif

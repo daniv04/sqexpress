@@ -55,7 +55,7 @@ class CreateInvoice extends CreateRecord
                                         $weight = $p->weight ?? 'SIN PESO';
                                         $cost = $p->service_cost ?? 0;
                                         return [
-                                            $p->id => "#{$p->tracking} — {$p->description} ({$weight} kg) — ₡" . number_format($cost, 2)
+                                            $p->id => "#{$p->tracking} — {$p->description} ({$weight} kg) — \$" . number_format($cost, 2)
                                         ];
                                     })
                                     ->toArray();
@@ -116,7 +116,7 @@ class CreateInvoice extends CreateRecord
                                     }),
 
                                 Forms\Components\TextInput::make('service_cost')
-                                    ->label('Costo (₡)')
+                                    ->label('Costo (USD)')
                                     ->numeric()
                                     ->readOnly()
                                     ->dehydrated(true),
@@ -131,7 +131,7 @@ class CreateInvoice extends CreateRecord
                             ->live(),
 
                         Forms\Components\TextInput::make('delivery_fee')
-                            ->label('Cargo por entrega (₡)')
+                            ->label('Cargo por entrega (USD)')
                             ->numeric()
                             ->minValue(0)
                             ->default(0)
@@ -149,7 +149,7 @@ class CreateInvoice extends CreateRecord
                                 foreach ($packageWeights as $item) {
                                     $subtotal += (float) ($item['service_cost'] ?? 0);
                                 }
-                                return '₡' . number_format($subtotal, 2);
+                                return '$' . number_format($subtotal, 2);
                             })
                             ->live(),
 
@@ -173,7 +173,7 @@ class CreateInvoice extends CreateRecord
                                 $discount = $service->calculateDiscount($subtotal, $isFirst);
 
                                 return $isFirst
-                                    ? "10% cliente nuevo: -₡" . number_format($discount, 2)
+                                    ? "10% cliente nuevo: -\$" . number_format($discount, 2)
                                     : 'Sin descuento';
                             })
                             ->live(),
@@ -187,7 +187,7 @@ class CreateInvoice extends CreateRecord
                                 }
 
                                 $deliveryFee = (float) ($get('delivery_fee') ?? 0);
-                                return '₡' . number_format($deliveryFee, 2);
+                                return '$' . number_format($deliveryFee, 2);
                             })
                             ->live(),
 
@@ -212,7 +212,7 @@ class CreateInvoice extends CreateRecord
                                 $deliveryFee = (float) ($get('has_delivery_fee') ? ($get('delivery_fee') ?? 0) : 0);
                                 $total = $subtotal - $discount + $deliveryFee;
 
-                                return '₡' . number_format($total, 2);
+                                return '$' . number_format($total, 2);
                             })
                             ->live(),
                     ]),

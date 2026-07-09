@@ -131,7 +131,7 @@ class ViewPackage extends ViewRecord
 
                         Infolists\Components\TextEntry::make('service_cost')
                             ->label('Costo servicio')
-                            ->prefix('₡')
+                            ->prefix('$')
                             ->placeholder('—'),
 
                         Infolists\Components\TextEntry::make('invoice.invoice_number')

@@ -43,19 +43,19 @@ class InvoiceResource extends Resource
                     ->counts('packages')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('subtotal')
-                    ->label('Subtotal')->prefix('₡')->sortable(),
+                    ->label('Subtotal')->prefix('$')->sortable(),
                 Tables\Columns\IconColumn::make('discount_amount')
                     ->label('Descuento')
                     ->icon(fn ($state): string => (float) $state > 0 ? 'heroicon-o-tag' : '')
                     ->color('success')
-                    ->tooltip(fn ($state): string => (float) $state > 0 ? "10% cliente nuevo: -₡{$state}" : ''),
+                    ->tooltip(fn ($state): string => (float) $state > 0 ? "10% cliente nuevo: -\${$state}" : ''),
                 Tables\Columns\TextColumn::make('delivery_fee')
                     ->label('Entrega')
-                    ->prefix('₡')
+                    ->prefix('$')
                     ->sortable()
                     ->visible(fn ($record) => $record && (float) $record->delivery_fee > 0),
                 Tables\Columns\TextColumn::make('total')
-                    ->label('Total')->prefix('₡')->sortable()
+                    ->label('Total')->prefix('$')->sortable()
                     ->weight('bold'),
                 Tables\Columns\TextColumn::make('points_earned')
                     ->label('Puntos')->suffix(' pts'),

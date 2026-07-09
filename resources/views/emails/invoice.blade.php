@@ -34,7 +34,7 @@
 
         @if($invoice->discount_amount > 0)
         <div style="background-color: #dcfce7; color: #15803d; padding: 10px 16px; border-radius: 6px; margin: 12px 0; font-weight: bold;">
-            🎉 ¡Descuento del 10% aplicado por ser tu primera factura con SQExpress! Ahorraste ₡{{ number_format($invoice->discount_amount, 2) }}.
+            🎉 ¡Descuento del 10% aplicado por ser tu primera factura con SQExpress! Ahorraste ${{ number_format($invoice->discount_amount, 2) }}.
         </div>
         @endif
 
@@ -45,7 +45,7 @@
             <div class="package-item">
                 <strong>{{ $package->tracking }}</strong><br>
                 <span class="package-tracking">{{ $package->description ?: '(sin descripción)' }}</span><br>
-                <span style="color: #1d4ed8; font-weight: bold;">₡{{ number_format($package->service_cost, 2) }}</span>
+                <span style="color: #1d4ed8; font-weight: bold;">${{ number_format($package->service_cost, 2) }}</span>
             </div>
             @endforeach
         </div>
@@ -59,27 +59,27 @@
         @if($invoice->discount_amount > 0)
         <div class="field">
             <div class="label">Subtotal</div>
-            <div class="value">₡{{ number_format($invoice->subtotal, 2) }}</div>
+            <div class="value">${{ number_format($invoice->subtotal, 2) }}</div>
         </div>
         <div class="field">
             <div class="label">Descuento (10%)</div>
-            <div class="value" style="color: #15803d;">- ₡{{ number_format($invoice->discount_amount, 2) }}</div>
+            <div class="value" style="color: #15803d;">- ${{ number_format($invoice->discount_amount, 2) }}</div>
         </div>
         @else
         <div class="field">
             <div class="label">Subtotal</div>
-            <div class="value">₡{{ number_format($invoice->subtotal, 2) }}</div>
+            <div class="value">${{ number_format($invoice->subtotal, 2) }}</div>
         </div>
         @endif
         @if($invoice->delivery_fee > 0)
         <div class="field">
             <div class="label">Cargo por entrega</div>
-            <div class="value">₡{{ number_format($invoice->delivery_fee, 2) }}</div>
+            <div class="value">${{ number_format($invoice->delivery_fee, 2) }}</div>
         </div>
         @endif
         <div class="field">
             <div class="label">Total a pagar</div>
-            <div class="value">₡{{ number_format($invoice->total, 2) }}</div>
+            <div class="value">${{ number_format($invoice->total, 2) }}</div>
         </div>
 
         <div class="field">
