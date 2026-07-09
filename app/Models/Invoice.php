@@ -19,6 +19,8 @@ class Invoice extends Model
         'discount_amount',
         'delivery_fee',
         'total',
+        'exchange_rate',
+        'total_crc',
         'points_earned',
         'generated_at',
     ];
@@ -30,6 +32,8 @@ class Invoice extends Model
             'discount_amount' => 'decimal:2',
             'delivery_fee' => 'decimal:2',
             'total' => 'decimal:2',
+            'exchange_rate' => 'decimal:2',
+            'total_crc' => 'decimal:2',
             'points_earned' => 'integer',
             'generated_at' => 'datetime',
         ];

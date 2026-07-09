@@ -3,6 +3,7 @@
 namespace App\Services\DbService;
 
 use App\Events\InvoiceGenerated;
+use App\Models\AppSetting;
 use App\Models\Invoice;
 use App\Models\Package;
 use App\Models\User;
@@ -63,6 +64,9 @@ class InvoiceService
             $total = $subtotal - $discount + $deliveryFee;
             $points = $this->calculatePoints($total);
 
+            $rate = (float) AppSetting::get('exchange_rate_usd_crc', 0);
+            $totalCrc = $rate > 0 ? round($total * $rate, 2) : null;
+
             $invoiceNumber = $this->generateInvoiceNumber();
 
             // Create invoice record
@@ -74,6 +78,8 @@ class InvoiceService
                 'discount_amount' => $discount,
                 'delivery_fee' => $deliveryFee,
                 'total' => $total,
+                'exchange_rate' => $rate > 0 ? $rate : null,
+                'total_crc' => $totalCrc,
                 'points_earned' => $points,
                 'generated_at' => now(),
             ]);
