@@ -213,7 +213,14 @@ class CreateInvoice extends CreateRecord
                                 $deliveryFee = (float) ($get('has_delivery_fee') ? ($get('delivery_fee') ?? 0) : 0);
                                 $total = $subtotal - $discount + $deliveryFee;
 
-                                return '$' . number_format($total, 2);
+                                $totalPreview = '$' . number_format($total, 2);
+
+                                $rate = (float) AppSetting::get('exchange_rate_usd_crc', 0);
+                                if ($rate > 0) {
+                                    $totalPreview .= ' · ₡' . number_format(round($total * $rate, 2), 2);
+                                }
+
+                                return $totalPreview;
                             })
                             ->live(),
                     ]),

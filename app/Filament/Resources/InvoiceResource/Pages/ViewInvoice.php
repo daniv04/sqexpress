@@ -65,6 +65,12 @@ class ViewInvoice extends ViewRecord
                         ->prefix('$')
                         ->weight(\Filament\Support\Enums\FontWeight::Bold)
                         ->size(\Filament\Infolists\Components\TextEntry\TextEntrySize::Large),
+                    Infolists\Components\TextEntry::make('total_crc')
+                        ->label('Total a pagar (CRC)')
+                        ->prefix('₡')
+                        ->weight(\Filament\Support\Enums\FontWeight::Bold)
+                        ->size(\Filament\Infolists\Components\TextEntry\TextEntrySize::Large)
+                        ->visible(fn ($record): bool => $record->exchange_rate !== null),
                     Infolists\Components\TextEntry::make('points_earned')
                         ->label('Puntos otorgados')->suffix(' pts'),
                 ]),

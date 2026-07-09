@@ -82,6 +82,17 @@
             <div class="value">${{ number_format($invoice->total, 2) }}</div>
         </div>
 
+        @if($invoice->exchange_rate !== null)
+        <div class="field">
+            <div class="label">Tipo de cambio</div>
+            <div class="value">₡{{ number_format($invoice->exchange_rate, 2) }}</div>
+        </div>
+        <div class="field">
+            <div class="label">Total a pagar (CRC)</div>
+            <div class="value" style="color: #1d4ed8; font-size: 18px;">₡{{ number_format($invoice->total_crc, 2) }}</div>
+        </div>
+        @endif
+
         <div class="field">
             <div class="label">Tu casillero</div>
             <div class="value">{{ $invoice->user->locker_code }}</div>
