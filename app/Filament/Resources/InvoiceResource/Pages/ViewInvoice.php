@@ -36,18 +36,18 @@ class ViewInvoice extends ViewRecord
                     Infolists\Components\TextEntry::make('invoice_generated_at')
                         ->label('Fecha de emisión')->dateTime('d/m/Y H:i'),
                     Infolists\Components\TextEntry::make('service_cost')
-                        ->label('Subtotal')->prefix('₡'),
+                        ->label('Subtotal')->prefix('$'),
                     Infolists\Components\TextEntry::make('discount_amount')
-                        ->label('Descuento (10% cliente nuevo)')->prefix('- ₡')
+                        ->label('Descuento (10% cliente nuevo)')->prefix('- $')
                         ->color('success')
                         ->visible(fn ($record): bool => (float) $record->discount_amount > 0),
                     Infolists\Components\TextEntry::make('delivery_fee')
-                        ->label('Cargo por entrega')->prefix('₡')
+                        ->label('Cargo por entrega')->prefix('$')
                         ->color('warning')
                         ->visible(fn ($record): bool => (float) $record->delivery_fee > 0),
                     Infolists\Components\TextEntry::make('total')
                         ->label('Total')
-                        ->prefix('₡')
+                        ->prefix('$')
                         ->weight(\Filament\Support\Enums\FontWeight::Bold)
                         ->size(\Filament\Infolists\Components\TextEntry\TextEntrySize::Large)
                         ->state(fn ($record): string => number_format(

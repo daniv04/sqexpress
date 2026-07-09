@@ -39,11 +39,11 @@ class Configuracion extends Page implements HasForms
         return $form
             ->schema([
                 TextInput::make('price_per_kg')
-                    ->label('Precio por kilogramo (₡)')
+                    ->label('Precio por kilogramo (USD)')
                     ->numeric()
                     ->minValue(0)
                     ->required()
-                    ->prefix('₡')
+                    ->prefix('$')
                     ->helperText('Este precio se usará para calcular el costo del servicio al generar facturas.'),
             ])
             ->statePath('data');

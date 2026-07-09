@@ -14,7 +14,7 @@
             <span class="mt-1 text-sm text-blue-600 dark:text-blue-400 font-medium">puntos acumulados</span>
         </div>
         <div class="text-sm text-gray-600 dark:text-gray-400 max-w-xs">
-            <p>Ganas <strong>1 punto por cada ₡100</strong> del costo de servicio de tus envíos facturados.</p>
+            <p>Ganas <strong>1 punto por cada $1</strong> del costo de servicio de tus envíos facturados.</p>
             <p class="mt-2 text-xs text-gray-400 dark:text-gray-500">El canje de puntos estará disponible próximamente.</p>
         </div>
     </div>

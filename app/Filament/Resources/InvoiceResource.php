@@ -46,12 +46,12 @@ class InvoiceResource extends Resource
                 Tables\Columns\TextColumn::make('user.locker_code')
                     ->label('Casillero')->badge()->fontFamily('mono'),
                 Tables\Columns\TextColumn::make('service_cost')
-                    ->label('Subtotal')->prefix('₡')->sortable(),
+                    ->label('Subtotal')->prefix('$')->sortable(),
                 Tables\Columns\IconColumn::make('discount_amount')
                     ->label('Descuento')
                     ->icon(fn ($state): string => (float) $state > 0 ? 'heroicon-o-tag' : '')
                     ->color('success')
-                    ->tooltip(fn ($state): string => (float) $state > 0 ? "10% cliente nuevo: -₡{$state}" : ''),
+                    ->tooltip(fn ($state): string => (float) $state > 0 ? "10% cliente nuevo: -\${$state}" : ''),
                 Tables\Columns\TextColumn::make('points_earned')
                     ->label('Puntos')->suffix(' pts'),
                 Tables\Columns\TextColumn::make('invoice_generated_at')

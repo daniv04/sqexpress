@@ -92,7 +92,7 @@ class ViewPackage extends ViewRecord
                             $set('service_cost', round((float) $state * $price, 2));
                         }),
                     Forms\Components\TextInput::make('service_cost')
-                        ->label('Costo del servicio (₡)')
+                        ->label('Costo del servicio (USD)')
                         ->numeric()
                         ->minValue(0)
                         ->required()
@@ -110,7 +110,7 @@ class ViewPackage extends ViewRecord
                             $price = (float) AppSetting::get('price_per_kg', 0);
                             $cost = round($weight * $price, 2);
 
-                            return "{$weight} kg × ₡" . number_format($price, 2) . ' = ₡' . number_format($cost, 2);
+                            return "{$weight} kg × \$" . number_format($price, 2) . ' = $' . number_format($cost, 2);
                         }),
                     Forms\Components\Toggle::make('has_delivery_fee')
                         ->label('Cobro adicional por entrega')
@@ -118,7 +118,7 @@ class ViewPackage extends ViewRecord
                         ->live()
                         ->default(fn () => (float) $this->record->delivery_fee > 0),
                     Forms\Components\TextInput::make('delivery_fee')
-                        ->label('Monto adicional por entrega (₡)')
+                        ->label('Monto adicional por entrega (USD)')
                         ->numeric()
                         ->minValue(0)
                         ->required()
@@ -223,7 +223,7 @@ class ViewPackage extends ViewRecord
 
                         Infolists\Components\TextEntry::make('service_cost')
                             ->label('Costo servicio')
-                            ->prefix('₡')
+                            ->prefix('$')
                             ->placeholder('—'),
 
                         Infolists\Components\TextEntry::make('invoice_number')

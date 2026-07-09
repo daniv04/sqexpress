@@ -38,7 +38,8 @@ class InvoiceService
 
     public function calculatePoints(float $totalAfterDiscount): int
     {
-        return (int) round($totalAfterDiscount * 0.01);
+        // 1 loyalty point per USD dollar of the discounted total
+        return (int) round($totalAfterDiscount);
     }
 
     public function generateAndPersistInvoice(Package $package, float $serviceCost, int $adminId, float $deliveryFee = 0.0): Package
