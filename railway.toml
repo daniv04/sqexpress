@@ -3,7 +3,6 @@ builder = "railpack"
 
 [build.environment]
 PHP_EXTENSIONS = "ctype curl dom fileinfo filter hash mbstring openssl pcre pdo session tokenizer xml pdo_mysql intl zip"
-RAILPACK_BUILD_CMD = "composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader && corepack enable && pnpm install --frozen-lockfile && pnpm run build"
 
 [deploy]
 startCommand = "php artisan migrate --force && php artisan db:seed --class=GeodataSeeder --force && php artisan db:seed --class=AdminUserSeeder --force && php artisan config:cache && php artisan route:cache && php artisan view:cache && bash -c 'if [ \"$RAILWAY_RUN_AS_WORKER\" = \"true\" ]; then php artisan queue:work --sleep=3 --tries=3 --max-time=3600; else php artisan serve --host=0.0.0.0 --port=$PORT; fi'"
