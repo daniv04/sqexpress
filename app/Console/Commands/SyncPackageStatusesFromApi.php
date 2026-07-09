@@ -7,6 +7,7 @@ use App\Models\Package;
 use App\Models\User;
 use App\Services\DbService\PackageService;
 use App\Services\MlcLogisticsClient;
+use App\Support\Weight;
 use Filament\Notifications\Notification;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
@@ -206,9 +207,9 @@ class SyncPackageStatusesFromApi extends Command
                 break; // No valid transition available
             }
 
-            // Update weight before transitioning to RECEIVED_IN_WAREHOUSE
+            // Update weight before transitioning to RECEIVED_IN_WAREHOUSE (API sends lbs; store grams)
             if ($nextStep === PackageStatus::RECEIVED_IN_WAREHOUSE && $pesoFinal !== null) {
-                $package->update(['weight' => (float) $pesoFinal]);
+                $package->update(['weight' => Weight::lbsToGrams((float) $pesoFinal)]);
             }
 
             $shelfLocation = $nextStep === PackageStatus::RECEIVED_IN_BUSINESS ? 'Pendiente' : null;

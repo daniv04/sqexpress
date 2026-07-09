@@ -8,6 +8,7 @@ use App\Events\PackageStatusChanged;
 use App\Events\PackageUpdatedByAdmin;
 use App\Models\Package;
 use App\Models\PackageStatusHistory;
+use App\Support\Weight;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 use DomainException;
@@ -16,12 +17,16 @@ class PackageService
 {
     public function createPackage(array $data): Package
     {
+        $weight = $data['weight'] !== null
+            ? Weight::lbsToGrams((float) $data['weight'])
+            : null;
+
         $package = Package::create([
             'tracking' => $data['tracking'],
             'user_id' => $data['user_id'],
             'shipping_method_id' => $data['shipping_method_id'],
             'description' => $data['description'],
-            'weight' => $data['weight'],
+            'weight' => $weight,
             'approx_value' => $data['approx_value'],
             'status' => PackageStatus::PREALERTED->value,
             'prealerted_at' => now(),

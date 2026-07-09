@@ -9,6 +9,7 @@ use App\Models\Invoice;
 use App\Models\Package;
 use App\Models\User;
 use App\Services\DbService\InvoiceService;
+use App\Support\Weight;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;

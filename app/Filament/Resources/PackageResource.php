@@ -66,9 +66,11 @@ class PackageResource extends Resource
                             ->columnSpanFull(),
 
                         Forms\Components\TextInput::make('weight')
-                            ->label('Peso (kg)')
+                            ->label('Peso (lbs)')
                             ->numeric()
-                            ->minValue(0),
+                            ->minValue(0)
+                            ->formatStateUsing(fn ($state) => $state !== null ? \App\Support\Weight::gramsToLbs((float) $state) : null)
+                            ->dehydrateStateUsing(fn ($state) => $state !== null ? \App\Support\Weight::lbsToGrams((float) $state) : null),
 
                         Forms\Components\TextInput::make('approx_value')
                             ->label('Valor aprox. (USD)')
@@ -131,9 +133,10 @@ class PackageResource extends Resource
 
                 Tables\Columns\TextColumn::make('weight')
                     ->label('Peso')
-                    ->suffix(' kg')
+                    ->suffix(' lbs')
                     ->sortable()
-                    ->placeholder('—'),
+                    ->placeholder('—')
+                    ->formatStateUsing(fn ($state) => $state !== null ? \App\Support\Weight::gramsToLbs((float) $state) : null),
 
                 Tables\Columns\TextColumn::make('shelf_location')
                     ->label('Estante')
@@ -238,7 +241,7 @@ class PackageResource extends Resource
                     ->fillForm(fn (Package $record): array => [
                         'tracking' => $record->tracking,
                         'description' => $record->description,
-                        'weight' => $record->weight,
+                        'weight' => $record->weight !== null ? \App\Support\Weight::gramsToLbs((float) $record->weight) : null,
                         'approx_value' => $record->approx_value,
                         'shelf_location' => $record->shelf_location,
                         'shipping_method_id' => $record->shipping_method_id,
@@ -357,9 +360,10 @@ class PackageResource extends Resource
                 ->columnSpanFull(),
 
             Forms\Components\TextInput::make('weight')
-                ->label('Peso (kg)')
+                ->label('Peso (lbs)')
                 ->numeric()
-                ->minValue(0),
+                ->minValue(0)
+                ->dehydrateStateUsing(fn ($state) => $state !== null ? \App\Support\Weight::lbsToGrams((float) $state) : null),
 
             Forms\Components\TextInput::make('approx_value')
                 ->label('Valor aprox. (USD)')
@@ -377,7 +381,7 @@ class PackageResource extends Resource
         return match ($field) {
             'tracking' => 'Tracking',
             'description' => 'Descripción',
-            'weight' => 'Peso (kg)',
+            'weight' => 'Peso (lbs)',
             'approx_value' => 'Valor aprox. (USD)',
             'shelf_location' => 'Estante',
             'shipping_method_id' => 'Método de envío',
@@ -405,6 +409,11 @@ class PackageResource extends Resource
             if ($field === 'shipping_method_id') {
                 $oldValue = ShippingMethod::find($oldValue)?->name ?? $oldValue;
                 $newValue = ShippingMethod::find($newValue)?->name ?? $newValue;
+            }
+
+            if ($field === 'weight') {
+                $oldValue = $oldValue !== null ? \App\Support\Weight::gramsToLbs((float) $oldValue) : null;
+                $newValue = $newValue !== null ? \App\Support\Weight::gramsToLbs((float) $newValue) : null;
             }
 
             $lines[] = e(self::fieldLabel($field)) . ': ' . e($oldValue) . ' → ' . e($newValue);
