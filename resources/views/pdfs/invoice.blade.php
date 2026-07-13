@@ -41,9 +41,9 @@
             <td style="width: 50%;">
                 @php $logoPath = public_path('images/logo_sqexpress_noback.png'); @endphp
                 @if(file_exists($logoPath))
-                    <img src="{{ $logoPath }}" alt="SQExpress" style="height: 50px; margin-bottom: 8px;"><br>
+                    <img src="{{ $logoPath }}" alt="SQ EXPRESS CR" style="height: 50px; margin-bottom: 8px;"><br>
                 @endif
-                <div class="company-name">SQExpress</div>
+                <div class="company-name">SQ EXPRESS CR</div>
                 <div class="company-info">
                     Servicio de Paquetería Internacional<br>
                     Costa Rica<br>
@@ -166,7 +166,7 @@
     <div class="footer-note">
         * Los puntos otorgados son 1 por cada $1 del total a pagar ({{ $invoice->points_earned }} puntos).<br>
         @if($invoice->discount_amount > 0)
-        * Descuento del 10% aplicado por ser tu primera factura con SQExpress.<br>
+        * Descuento del 10% aplicado por ser tu primera factura con SQ EXPRESS CR.<br>
         @endif
         Este documento es una factura generada automáticamente. Para consultas escriba a info@sqexpress.com.
     </div>

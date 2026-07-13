@@ -18,7 +18,7 @@
 </head>
 <body>
     <div style="background:#ffffff; padding:16px 20px; border-radius:8px 8px 0 0; border:1px solid #e5e7eb; border-bottom:none; text-align:left;">
-        <img src="https://i.imgur.com/aSeqoim.png" alt="SQExpress" style="height:80px; display:block;">
+        <img src="https://i.imgur.com/aSeqoim.png" alt="SQ EXPRESS CR" style="height:80px; display:block;">
     </div>
     <div class="header" style="border-radius:0;">
         <h2 style="margin:0;">Tu factura está lista</h2>
@@ -34,7 +34,7 @@
 
         @if($invoice->discount_amount > 0)
         <div style="background-color: #dcfce7; color: #15803d; padding: 10px 16px; border-radius: 6px; margin: 12px 0; font-weight: bold;">
-            🎉 ¡Descuento del 10% aplicado por ser tu primera factura con SQExpress! Ahorraste ${{ number_format($invoice->discount_amount, 2) }}.
+            🎉 ¡Descuento del 10% aplicado por ser tu primera factura con SQ EXPRESS CR! Ahorraste ${{ number_format($invoice->discount_amount, 2) }}.
         </div>
         @endif
 
