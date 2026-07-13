@@ -45,7 +45,7 @@ class PackageController extends Controller
     public function userPackages(Request $request)
     {
         $userId = Auth::id();
-        $query = Package::where('user_id', $userId);
+        $query = Package::where('user_id', $userId)->visibleToClient();
        
         // Búsqueda por tracking
         if ($request->filled('search')) {
@@ -158,6 +158,20 @@ class PackageController extends Controller
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Error al actualizar: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Hide a delivered or canceled package from the client's views.
+     */
+    public function hide(Package $package)
+    {
+        $this->authorize('hide', $package);
+
+        $package->hidden_at = now();
+        $package->save();
+
+        return redirect()->route('mis-paquetes')
+            ->with('success', 'Paquete eliminado de tu lista.');
     }
 
     /**

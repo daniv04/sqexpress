@@ -13,7 +13,7 @@ class PanelController extends Controller
     public function index()
     {
         $user = Auth::user();
-        $packages = $user->packages;
+        $packages = $user->packages()->visibleToClient()->get();
 
         $statuses = [
             'prealerted' => 'Prealertado',

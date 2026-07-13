@@ -41,6 +41,9 @@ Route::put('/mis-paquetes/{package}', [PackageController::class, 'update'])
 Route::delete('/mis-paquetes/{package}', [PackageController::class, 'destroy'])
     ->middleware(['auth', 'verified'])->name('package.destroy');
 
+Route::patch('/mis-paquetes/{package}/ocultar', [PackageController::class, 'hide'])
+    ->middleware(['auth', 'verified'])->name('package.hide');
+
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

@@ -41,7 +41,13 @@ class Package extends Model
             'prealerted_at' => 'datetime',
             'invoice_generated_at' => 'datetime',
             'points_earned' => 'integer',
+            'hidden_at' => 'datetime',
         ];
+    }
+
+    public function scopeVisibleToClient($query)
+    {
+        return $query->whereNull('hidden_at');
     }
 
     public function hasInvoice(): bool

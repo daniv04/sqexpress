@@ -163,12 +163,30 @@
                                             {{ $package->created_at->format('d/m/Y H:i') }}
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                            <a
-                                                href="{{ route('package.show', $package) }}"
-                                                class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 font-medium"
-                                            >
-                                                Ver Detalles
-                                            </a>
+                                            <div class="flex items-center gap-4">
+                                                <a
+                                                    href="{{ route('package.show', $package) }}"
+                                                    class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-300 font-medium"
+                                                >
+                                                    Ver Detalles
+                                                </a>
+                                                @can('hide', $package)
+                                                    <form
+                                                        method="POST"
+                                                        action="{{ route('package.hide', $package) }}"
+                                                        onsubmit="return confirm('¿Deseas eliminar este paquete de tu lista? No podrás volver a verlo.');"
+                                                    >
+                                                        @csrf
+                                                        @method('PATCH')
+                                                        <button
+                                                            type="submit"
+                                                            class="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 font-medium"
+                                                        >
+                                                            Eliminar
+                                                        </button>
+                                                    </form>
+                                                @endcan
+                                            </div>
                                         </td>
                                     </tr>
                                 @endforeach

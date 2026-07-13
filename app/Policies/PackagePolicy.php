@@ -39,4 +39,10 @@ class PackagePolicy
 
         return $package->user_id === $user->id && $package->status === 'prealerted';
     }
+
+    public function hide(User $user, Package $package): bool
+    {
+        return $package->user_id === $user->id
+            && in_array($package->status, ['delivered', 'canceled'], true);
+    }
 }

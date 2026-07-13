@@ -10,8 +10,6 @@
             <!-- Stats Cards -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                 @php
-                    $user = Auth::user();
-                    $packages = $user->packages;
                     $prealerted = $packages->where('status', 'prealerted')->count();
                     $inWarehouse = $packages->whereIn('status', ['received_in_warehouse', 'assigned_flight'])->count();
                     $inTransit = $packages->whereIn('status', ['received_in_customs', 'customs_process_finished', 'received_in_business'])->count();
