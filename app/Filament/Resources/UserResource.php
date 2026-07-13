@@ -3,6 +3,9 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\UserResource\Pages;
+use App\Models\Canton;
+use App\Models\Distrito;
+use App\Models\Provincia;
 use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -75,6 +78,42 @@ class UserResource extends Resource
                     ->label('Cédula')
                     ->nullable()
                     ->maxLength(255),
+
+                Forms\Components\Select::make('provincia_id')
+                    ->label('Provincia')
+                    ->options(Provincia::orderBy('nombre')->pluck('nombre', 'id'))
+                    ->searchable()
+                    ->nullable()
+                    ->live()
+                    ->afterStateUpdated(function (Forms\Set $set): void {
+                        $set('canton_id', null);
+                        $set('distrito_id', null);
+                    }),
+
+                Forms\Components\Select::make('canton_id')
+                    ->label('Cantón')
+                    ->options(fn (Forms\Get $get) => $get('provincia_id')
+                        ? Canton::where('provincia_id', $get('provincia_id'))->orderBy('nombre')->pluck('nombre', 'id')
+                        : [])
+                    ->searchable()
+                    ->nullable()
+                    ->live()
+                    ->afterStateUpdated(fn (Forms\Set $set) => $set('distrito_id', null)),
+
+                Forms\Components\Select::make('distrito_id')
+                    ->label('Distrito')
+                    ->options(fn (Forms\Get $get) => $get('canton_id')
+                        ? Distrito::where('canton_id', $get('canton_id'))->orderBy('nombre')->pluck('nombre', 'id')
+                        : [])
+                    ->searchable()
+                    ->nullable(),
+
+                Forms\Components\Textarea::make('address')
+                    ->label('Dirección exacta')
+                    ->nullable()
+                    ->maxLength(500)
+                    ->rows(2)
+                    ->columnSpanFull(),
 
                 Forms\Components\Toggle::make('active')
                     ->label('Activo')
