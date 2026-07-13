@@ -36,7 +36,11 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->brandLogo(asset('images/logo_sqexpress_noback.png'))
             ->darkModeBrandLogo(asset('images/logo_sqexpress_noback_dark.png'))
-            ->brandLogoHeight('3.5rem')
+            ->brandLogoHeight('8rem')
+            ->renderHook(
+                \Filament\View\PanelsRenderHook::STYLES_AFTER,
+                fn (): string => '<style>.fi-sidebar-header, .fi-topbar nav { height: 9rem; }</style>',
+            )
             ->colors([
                 'primary' => Color::Indigo,
             ])
