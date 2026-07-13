@@ -445,7 +445,7 @@ class PackageResource extends Resource
         return match ($state) {
             'prealerted' => 'Prealertado',
             'received_in_warehouse' => 'Recibido en bodega',
-            'assigned_flight' => 'Vuelo asignado',
+            'assigned_flight' => 'Vuelo/Embarcación asignada',
             'in_transit' => 'En tránsito a CR',
             'received_in_customs' => 'Recibido en aduana CR',
             'customs_process_finished' => 'Procesos de aduanas finalizado',

@@ -69,7 +69,7 @@ class PackageController extends Controller
         $statuses = [
             'prealerted' => 'Prealertado',
             'received_in_warehouse' => 'Recibido en Bodega',
-            'assigned_flight' => 'Vuelo Asignado',
+            'assigned_flight' => 'Vuelo/Embarcación Asignada',
             'in_transit' => 'En Tránsito a CR',
             'received_in_customs' => 'Recibido en Aduanas',
             'customs_process_finished' => 'Procesos de Aduanas Finalizado',
@@ -108,7 +108,7 @@ class PackageController extends Controller
         $statuses = [
             'prealerted' => 'Prealertado',
             'received_in_warehouse' => 'Recibido en Bodega',
-            'assigned_flight' => 'Vuelo Asignado',
+            'assigned_flight' => 'Vuelo/Embarcación Asignada',
             'in_transit' => 'En Tránsito a CR',
             'received_in_customs' => 'Recibido en Aduanas',
             'customs_process_finished' => 'Procesos de Aduanas Finalizado',
