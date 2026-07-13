@@ -126,6 +126,18 @@ class CreateInvoice extends CreateRecord
 
                 Forms\Components\Section::make('Costos adicionales')
                     ->schema([
+                        Forms\Components\Toggle::make('apply_new_client_discount')
+                            ->label('Aplicar descuento de cliente nuevo (10%)')
+                            ->helperText('Solo aplica en la primera factura del cliente.')
+                            ->default(true)
+                            ->live()
+                            ->visible(function (Forms\Get $get): bool {
+                                $userId = $get('user_id');
+
+                                return $userId
+                                    && app(InvoiceService::class)->isFirstInvoice(User::find($userId));
+                            }),
+
                         Forms\Components\Toggle::make('has_delivery_fee')
                             ->label('Cobrar por entrega a domicilio')
                             ->live(),
@@ -170,11 +182,14 @@ class CreateInvoice extends CreateRecord
                                 $user = User::find($userId);
                                 $service = app(InvoiceService::class);
                                 $isFirst = $service->isFirstInvoice($user);
-                                $discount = $service->calculateDiscount($subtotal, $isFirst);
+                                $applies = $isFirst && $get('apply_new_client_discount');
+                                $discount = $service->calculateDiscount($subtotal, $applies);
 
-                                return $isFirst
-                                    ? "10% cliente nuevo: -\$" . number_format($discount, 2)
-                                    : 'Sin descuento';
+                                if ($applies) {
+                                    return "10% cliente nuevo: -\$" . number_format($discount, 2);
+                                }
+
+                                return $isFirst ? 'Desactivado por el administrador' : 'Sin descuento';
                             })
                             ->live(),
 
@@ -207,8 +222,8 @@ class CreateInvoice extends CreateRecord
 
                                 $user = User::find($userId);
                                 $service = app(InvoiceService::class);
-                                $isFirst = $service->isFirstInvoice($user);
-                                $discount = $service->calculateDiscount($subtotal, $isFirst);
+                                $applies = $get('apply_new_client_discount') && $service->isFirstInvoice($user);
+                                $discount = $service->calculateDiscount($subtotal, $applies);
                                 $deliveryFee = (float) ($get('has_delivery_fee') ? ($get('delivery_fee') ?? 0) : 0);
                                 $total = $subtotal - $discount + $deliveryFee;
 
@@ -262,6 +277,7 @@ class CreateInvoice extends CreateRecord
             packages: $packages,
             deliveryFee: $deliveryFee,
             adminId: auth()->id(),
+            applyNewClientDiscount: (bool) ($data['apply_new_client_discount'] ?? true),
         );
     }
 

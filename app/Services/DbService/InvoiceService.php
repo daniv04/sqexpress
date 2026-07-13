@@ -49,17 +49,19 @@ class InvoiceService
      * @param Collection $packages
      * @param float $deliveryFee
      * @param int $adminId
+     * @param bool $applyNewClientDiscount Admin can opt out of the first-invoice discount.
      * @return Invoice
      */
     public function generateAndPersistInvoice(
         User $user,
         Collection $packages,
         float $deliveryFee,
-        int $adminId
+        int $adminId,
+        bool $applyNewClientDiscount = true
     ): Invoice {
-        $invoice = DB::transaction(function () use ($user, $packages, $deliveryFee, $adminId): Invoice {
+        $invoice = DB::transaction(function () use ($user, $packages, $deliveryFee, $adminId, $applyNewClientDiscount): Invoice {
             $subtotal = $packages->sum('service_cost');
-            $isFirst = $this->isFirstInvoice($user);
+            $isFirst = $applyNewClientDiscount && $this->isFirstInvoice($user);
             $discount = $this->calculateDiscount($subtotal, $isFirst);
             $total = $subtotal - $discount + $deliveryFee;
             $points = $this->calculatePoints($total);
