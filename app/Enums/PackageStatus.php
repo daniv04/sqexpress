@@ -51,6 +51,19 @@ enum PackageStatus: string
         return in_array($to, $this->nextAllowedStatuses(), true);
     }
 
+    /**
+     * Weight is assigned manually by an admin once the package
+     * has physically arrived at the business.
+     */
+    public function allowsWeightAssignment(): bool
+    {
+        return in_array($this, [
+            self::RECEIVED_IN_BUSINESS,
+            self::READY_TO_DELIVER,
+            self::DELIVERED,
+        ], true);
+    }
+
     public static function values(): array
     {
         return array_map(static fn (self $status) => $status->value, self::cases());

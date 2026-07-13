@@ -156,20 +156,22 @@ class SyncPackageStatusesFromApiTest extends TestCase
 
         $package->refresh();
         $this->assertEquals('received_in_business', $package->status);
-        $this->assertEquals(3.2, $package->weight);
+        $this->assertEquals(0.0, $package->weight); // el peso ya no viene del API
     }
 
-    public function test_weight_falls_back_to_peso_when_peso_real_missing(): void
+    public function test_sync_never_assigns_weight_from_api(): void
     {
-        $package = $this->makePackage('TRK008', 'prealerted', weight: 0.0);
+        $package = $this->makePackage('TRK008', 'prealerted', weight: 500.0);
 
         $this->fakeMlc(paquetes: [
-            ['tracking' => 'TRK008', 'estatus' => 'Manifiesto Programado', 'peso' => 4.7],
+            ['tracking' => 'TRK008', 'estatus' => 'Manifiesto Programado', 'peso_real' => 3.2, 'peso' => 4.7],
         ]);
 
         $this->artisan('packages:sync-statuses')->assertSuccessful();
 
-        $this->assertEquals(4.7, $package->refresh()->weight);
+        $package->refresh();
+        $this->assertEquals('assigned_flight', $package->status);
+        $this->assertEquals(500.0, $package->weight); // lo asigna el admin manualmente
     }
 
     public function test_history_records_are_created_for_each_step(): void

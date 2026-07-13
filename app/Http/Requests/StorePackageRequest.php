@@ -41,12 +41,6 @@ class StorePackageRequest extends FormRequest
                 'string',
                 'max:1000',
             ],
-            'weight' => [
-                'nullable',
-                'numeric',
-                'min:0.01',
-                'max:999.99',
-            ],
             'approx_value' => [
                 'nullable',
                 'numeric',
@@ -68,8 +62,6 @@ class StorePackageRequest extends FormRequest
             'tracking.unique' => 'Este número de tracking ya existe para el método de envío seleccionado.',
             'shipping_method_id.required' => 'Debe seleccionar un método de envío.',
             'shipping_method_id.exists' => 'El método de envío seleccionado no es válido.',
-            'weight.numeric' => 'El peso debe ser un número.',
-            'weight.min' => 'El peso debe ser mayor a 0.',
             'approx_value.numeric' => 'El valor aproximado debe ser un número.',
             'approx_value.min' => 'El valor aproximado debe ser mayor a 0.',
         ];

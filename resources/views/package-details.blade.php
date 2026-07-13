@@ -99,16 +99,18 @@
                         </div>
 
                         <!-- Peso -->
-                        @if($package->weight)
                         <div>
                             <label class="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
                                 Peso
                             </label>
                             <p class="text-base text-gray-900 dark:text-gray-100">
-                                {{ number_format($package->weight, 2) }} kg
+                                @if($package->weight)
+                                    {{ number_format($package->weight, 2) }} kg
+                                @else
+                                    <span class="text-gray-400">—</span>
+                                @endif
                             </p>
                         </div>
-                        @endif
 
                         <!-- Valor Aproximado -->
                         @if($package->approx_value)

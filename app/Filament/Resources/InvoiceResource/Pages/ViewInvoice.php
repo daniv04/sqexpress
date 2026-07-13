@@ -86,8 +86,7 @@ class ViewInvoice extends ViewRecord
                             Infolists\Components\TextEntry::make('description')
                                 ->label('Descripción'),
                             Infolists\Components\TextEntry::make('weight')
-                                ->label('Peso')->suffix(' lbs')->placeholder('—')
-                                ->formatStateUsing(fn ($state) => $state !== null ? \App\Support\Weight::gramsToLbs((float) $state) : null),
+                                ->label('Peso')->suffix(' kg')->placeholder('—'),
                             Infolists\Components\TextEntry::make('service_cost')
                                 ->label('Costo')->prefix('$'),
                             Infolists\Components\TextEntry::make('shippingMethod.name')

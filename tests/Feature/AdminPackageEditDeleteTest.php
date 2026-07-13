@@ -236,7 +236,7 @@ class AdminPackageEditDeleteTest extends TestCase
             'approx_value' => 50.00,
             'shelf_location' => 'A-1',
             'shipping_method_id' => $method->id,
-            'status' => 'prealerted',
+            'status' => 'received_in_business',
         ]);
 
         $this->actingAs($admin);

@@ -6,7 +6,6 @@ use App\Models\Package;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\ShippingMethod;
-use App\Support\Weight;
 use App\Http\Requests\StorePackageRequest;
 use App\Http\Requests\UpdatePackageRequest;
 use App\Events\PackagePrealerted;
@@ -145,11 +144,6 @@ class PackageController extends Controller
             $this->authorize('update', $package);
 
             $data = $request->validated();
-
-            // Customer enters weight in lbs; store as grams (canonical unit)
-            $data['weight'] = isset($data['weight']) && $data['weight'] !== null
-                ? Weight::lbsToGrams((float) $data['weight'])
-                : null;
 
             $package->update($data);
 

@@ -120,7 +120,7 @@
             <tr>
                 <td>{{ $package->tracking }}</td>
                 <td><span class="type-badge">{{ $package->shippingMethod?->name ?? 'N/A' }}</span></td>
-                <td class="right">{{ $package->weight ? number_format(\App\Support\Weight::gramsToKg((float) $package->weight), 2) . ' Kg' : '—' }}</td>
+                <td class="right">{{ $package->weight ? number_format($package->weight, 2) . ' kg' : '—' }}</td>
                 <td class="right">${{ number_format($package->service_cost, 2) }}</td>
                 <td class="right">${{ number_format($package->service_cost, 2) }}</td>
             </tr>

@@ -121,9 +121,8 @@ class ViewPackage extends ViewRecord
 
                         Infolists\Components\TextEntry::make('weight')
                             ->label('Peso')
-                            ->suffix(' lbs')
-                            ->placeholder('—')
-                            ->formatStateUsing(fn ($state) => $state !== null ? \App\Support\Weight::gramsToLbs((float) $state) : null),
+                            ->suffix(' kg')
+                            ->placeholder('—'),
 
                         Infolists\Components\TextEntry::make('approx_value')
                             ->label('Valor aprox.')

@@ -7,7 +7,6 @@ use App\Models\Package;
 use App\Models\User;
 use App\Services\DbService\PackageService;
 use App\Services\MlcLogisticsClient;
-use App\Support\Weight;
 use Filament\Notifications\Notification;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
@@ -139,8 +138,7 @@ class SyncPackageStatusesFromApi extends Command
         }
 
         try {
-            $weight = $apiItem['peso_real'] ?? $apiItem['peso'] ?? null;
-            $this->advanceToTarget($package, $targetStatus, $weight, $packageService);
+            $this->advanceToTarget($package, $targetStatus, $packageService);
 
             return true;
         } catch (\Throwable $e) {
@@ -186,7 +184,6 @@ class SyncPackageStatusesFromApi extends Command
     private function advanceToTarget(
         Package $package,
         PackageStatus $target,
-        ?string $pesoFinal,
         PackageService $packageService
     ): void {
         // Walk step by step through allowed transitions until we reach the target
@@ -205,11 +202,6 @@ class SyncPackageStatusesFromApi extends Command
 
             if ($nextStep === null) {
                 break; // No valid transition available
-            }
-
-            // Update weight before transitioning to RECEIVED_IN_WAREHOUSE (API sends lbs; store grams)
-            if ($nextStep === PackageStatus::RECEIVED_IN_WAREHOUSE && $pesoFinal !== null) {
-                $package->update(['weight' => Weight::lbsToGrams((float) $pesoFinal)]);
             }
 
             $shelfLocation = $nextStep === PackageStatus::RECEIVED_IN_BUSINESS ? 'Pendiente' : null;

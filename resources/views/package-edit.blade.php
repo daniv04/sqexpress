@@ -76,22 +76,6 @@
                             @enderror
                         </div>
 
-                        <!-- Peso -->
-                        <div>
-                            <label for="weight" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                Peso (kg)
-                            </label>
-                            <input type="number"
-                                   name="weight"
-                                   id="weight"
-                                   step="0.01"
-                                   value="{{ old('weight', $package->weight) }}"
-                                   class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                            @error('weight')
-                                <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
-                            @enderror
-                        </div>
-
                         <!-- Valor Aproximado -->
                         <div>
                             <label for="approx_value" class="block text-sm font-medium text-gray-700 dark:text-gray-300">

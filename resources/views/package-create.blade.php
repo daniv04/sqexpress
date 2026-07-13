@@ -87,27 +87,6 @@
                         </div>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <!-- Peso -->
-                            <div>
-                                <label for="weight" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                    Peso (kg)
-                                </label>
-                                <input type="number"
-                                       name="weight"
-                                       id="weight"
-                                       step="0.01"
-                                       min="0.01"
-                                       value="{{ old('weight') }}"
-                                       placeholder="0.00"
-                                       class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                                    Peso aproximado del paquete
-                                </p>
-                                @error('weight')
-                                    <p class="mt-1 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>
-                                @enderror
-                            </div>
-
                             <!-- Valor Aproximado -->
                             <div>
                                 <label for="approx_value" class="block text-sm font-medium text-gray-700 dark:text-gray-300">

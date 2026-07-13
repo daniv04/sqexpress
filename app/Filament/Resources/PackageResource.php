@@ -66,11 +66,11 @@ class PackageResource extends Resource
                             ->columnSpanFull(),
 
                         Forms\Components\TextInput::make('weight')
-                            ->label('Peso (lbs)')
+                            ->label('Peso (kg)')
                             ->numeric()
                             ->minValue(0)
-                            ->formatStateUsing(fn ($state) => $state !== null ? \App\Support\Weight::gramsToLbs((float) $state) : null)
-                            ->dehydrateStateUsing(fn ($state) => $state !== null ? \App\Support\Weight::lbsToGrams((float) $state) : null),
+                            ->visible(fn (?Package $record): bool => $record !== null
+                                && PackageStatus::from($record->status)->allowsWeightAssignment()),
 
                         Forms\Components\TextInput::make('approx_value')
                             ->label('Valor aprox. (USD)')
@@ -133,10 +133,9 @@ class PackageResource extends Resource
 
                 Tables\Columns\TextColumn::make('weight')
                     ->label('Peso')
-                    ->suffix(' lbs')
+                    ->suffix(' kg')
                     ->sortable()
-                    ->placeholder('—')
-                    ->formatStateUsing(fn ($state) => $state !== null ? \App\Support\Weight::gramsToLbs((float) $state) : null),
+                    ->placeholder('—'),
 
                 Tables\Columns\TextColumn::make('shelf_location')
                     ->label('Estante')
@@ -237,11 +236,11 @@ class PackageResource extends Resource
                     ->color('gray')
                     ->authorize(fn (Package $record): bool => (bool) auth()->user()?->can('update', $record))
                     ->visible(fn (): bool => auth()->user()?->role === 'admin')
-                    ->form(fn (): array => self::adminEditFormSchema())
+                    ->form(fn (Package $record): array => self::adminEditFormSchema($record))
                     ->fillForm(fn (Package $record): array => [
                         'tracking' => $record->tracking,
                         'description' => $record->description,
-                        'weight' => $record->weight !== null ? \App\Support\Weight::gramsToLbs((float) $record->weight) : null,
+                        'weight' => $record->weight,
                         'approx_value' => $record->approx_value,
                         'shelf_location' => $record->shelf_location,
                         'shipping_method_id' => $record->shipping_method_id,
@@ -339,8 +338,11 @@ class PackageResource extends Resource
 
     // ── Helpers ────────────────────────────────────────────────────────────────
 
-    public static function adminEditFormSchema(): array
+    public static function adminEditFormSchema(?Package $record = null): array
     {
+        $canAssignWeight = $record !== null
+            && PackageStatus::from($record->status)->allowsWeightAssignment();
+
         return [
             Forms\Components\TextInput::make('tracking')
                 ->label('Tracking')
@@ -360,10 +362,10 @@ class PackageResource extends Resource
                 ->columnSpanFull(),
 
             Forms\Components\TextInput::make('weight')
-                ->label('Peso (lbs)')
+                ->label('Peso (kg)')
                 ->numeric()
                 ->minValue(0)
-                ->dehydrateStateUsing(fn ($state) => $state !== null ? \App\Support\Weight::lbsToGrams((float) $state) : null),
+                ->visible($canAssignWeight),
 
             Forms\Components\TextInput::make('approx_value')
                 ->label('Valor aprox. (USD)')
@@ -381,7 +383,7 @@ class PackageResource extends Resource
         return match ($field) {
             'tracking' => 'Tracking',
             'description' => 'Descripción',
-            'weight' => 'Peso (lbs)',
+            'weight' => 'Peso (kg)',
             'approx_value' => 'Valor aprox. (USD)',
             'shelf_location' => 'Estante',
             'shipping_method_id' => 'Método de envío',
@@ -409,11 +411,6 @@ class PackageResource extends Resource
             if ($field === 'shipping_method_id') {
                 $oldValue = ShippingMethod::find($oldValue)?->name ?? $oldValue;
                 $newValue = ShippingMethod::find($newValue)?->name ?? $newValue;
-            }
-
-            if ($field === 'weight') {
-                $oldValue = $oldValue !== null ? \App\Support\Weight::gramsToLbs((float) $oldValue) : null;
-                $newValue = $newValue !== null ? \App\Support\Weight::gramsToLbs((float) $newValue) : null;
             }
 
             $lines[] = e(self::fieldLabel($field)) . ': ' . e($oldValue) . ' → ' . e($newValue);

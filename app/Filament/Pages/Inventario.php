@@ -57,10 +57,9 @@ class Inventario extends Page implements HasTable
 
                 Tables\Columns\TextColumn::make('weight')
                     ->label('Peso')
-                    ->suffix(' lbs')
+                    ->suffix(' kg')
                     ->sortable()
-                    ->placeholder('—')
-                    ->formatStateUsing(fn ($state) => $state !== null ? \App\Support\Weight::gramsToLbs((float) $state) : null),
+                    ->placeholder('—'),
 
                 Tables\Columns\TextColumn::make('shelf_location')
                     ->label('Estante')
