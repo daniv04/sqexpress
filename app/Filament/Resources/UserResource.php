@@ -32,106 +32,128 @@ class UserResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('name')
-                    ->label('Nombre')
-                    ->required()
-                    ->maxLength(255),
+                Forms\Components\Section::make('Datos personales')
+                    ->icon('heroicon-o-identification')
+                    ->columns(2)
+                    ->schema([
+                        Forms\Components\TextInput::make('name')
+                            ->label('Nombre')
+                            ->required()
+                            ->maxLength(255),
 
-                Forms\Components\TextInput::make('email')
-                    ->email()
-                    ->required()
-                    ->unique(ignoreRecord: true)
-                    ->maxLength(255),
+                        Forms\Components\TextInput::make('email')
+                            ->label('Correo')
+                            ->email()
+                            ->required()
+                            ->unique(ignoreRecord: true)
+                            ->maxLength(255),
 
-                Forms\Components\TextInput::make('password')
-                    ->password()
-                    ->minLength(5)
-                    ->confirmed()
-                    ->required(fn (string $context) => $context === 'create')
-                    ->dehydrateStateUsing(fn ($state) => Hash::make($state))
-                    ->dehydrated(fn ($state) => filled($state))
-                    ->label(fn (string $context) => $context === 'edit'
-                        ? 'Nueva Contraseña (dejar en blanco para no cambiar)'
-                        : 'Contraseña'),
+                        Forms\Components\TextInput::make('phone')
+                            ->label('Teléfono')
+                            ->nullable()
+                            ->maxLength(255),
 
-                Forms\Components\TextInput::make('password_confirmation')
-                    ->password()
-                    ->required(fn (string $context) => $context === 'create')
-                    ->dehydrated(false)
-                    ->label('Confirmar Contraseña'),
+                        Forms\Components\TextInput::make('cedula')
+                            ->label('Cédula')
+                            ->nullable()
+                            ->maxLength(255),
+                    ]),
 
-                Forms\Components\Select::make('role')
-                    ->label('Rol')
-                    ->options([
-                        'admin' => 'Admin',
-                        'user' => 'Usuario',
-                    ])
-                    ->default('user')
-                    ->required(),
+                Forms\Components\Section::make('Ubicación')
+                    ->icon('heroicon-o-map-pin')
+                    ->columns(3)
+                    ->schema([
+                        Forms\Components\Select::make('provincia_id')
+                            ->label('Provincia')
+                            ->options(Provincia::orderBy('nombre')->pluck('nombre', 'id'))
+                            ->searchable()
+                            ->nullable()
+                            ->live()
+                            ->afterStateUpdated(function (Forms\Set $set): void {
+                                $set('canton_id', null);
+                                $set('distrito_id', null);
+                            }),
 
-                Forms\Components\TextInput::make('phone')
-                    ->label('Teléfono')
-                    ->nullable()
-                    ->maxLength(255),
+                        Forms\Components\Select::make('canton_id')
+                            ->label('Cantón')
+                            ->options(fn (Forms\Get $get) => $get('provincia_id')
+                                ? Canton::where('provincia_id', $get('provincia_id'))->orderBy('nombre')->pluck('nombre', 'id')
+                                : [])
+                            ->searchable()
+                            ->nullable()
+                            ->live()
+                            ->afterStateUpdated(fn (Forms\Set $set) => $set('distrito_id', null)),
 
-                Forms\Components\TextInput::make('cedula')
-                    ->label('Cédula')
-                    ->nullable()
-                    ->maxLength(255),
+                        Forms\Components\Select::make('distrito_id')
+                            ->label('Distrito')
+                            ->options(fn (Forms\Get $get) => $get('canton_id')
+                                ? Distrito::where('canton_id', $get('canton_id'))->orderBy('nombre')->pluck('nombre', 'id')
+                                : [])
+                            ->searchable()
+                            ->nullable(),
 
-                Forms\Components\Select::make('provincia_id')
-                    ->label('Provincia')
-                    ->options(Provincia::orderBy('nombre')->pluck('nombre', 'id'))
-                    ->searchable()
-                    ->nullable()
-                    ->live()
-                    ->afterStateUpdated(function (Forms\Set $set): void {
-                        $set('canton_id', null);
-                        $set('distrito_id', null);
-                    }),
+                        Forms\Components\Textarea::make('address')
+                            ->label('Dirección exacta')
+                            ->nullable()
+                            ->maxLength(500)
+                            ->rows(2)
+                            ->columnSpanFull(),
+                    ]),
 
-                Forms\Components\Select::make('canton_id')
-                    ->label('Cantón')
-                    ->options(fn (Forms\Get $get) => $get('provincia_id')
-                        ? Canton::where('provincia_id', $get('provincia_id'))->orderBy('nombre')->pluck('nombre', 'id')
-                        : [])
-                    ->searchable()
-                    ->nullable()
-                    ->live()
-                    ->afterStateUpdated(fn (Forms\Set $set) => $set('distrito_id', null)),
+                Forms\Components\Section::make('Acceso y seguridad')
+                    ->icon('heroicon-o-lock-closed')
+                    ->columns(2)
+                    ->schema([
+                        Forms\Components\TextInput::make('password')
+                            ->password()
+                            ->minLength(5)
+                            ->confirmed()
+                            ->required(fn (string $context) => $context === 'create')
+                            ->dehydrateStateUsing(fn ($state) => Hash::make($state))
+                            ->dehydrated(fn ($state) => filled($state))
+                            ->label(fn (string $context) => $context === 'edit'
+                                ? 'Nueva Contraseña (dejar en blanco para no cambiar)'
+                                : 'Contraseña'),
 
-                Forms\Components\Select::make('distrito_id')
-                    ->label('Distrito')
-                    ->options(fn (Forms\Get $get) => $get('canton_id')
-                        ? Distrito::where('canton_id', $get('canton_id'))->orderBy('nombre')->pluck('nombre', 'id')
-                        : [])
-                    ->searchable()
-                    ->nullable(),
+                        Forms\Components\TextInput::make('password_confirmation')
+                            ->password()
+                            ->required(fn (string $context) => $context === 'create')
+                            ->dehydrated(false)
+                            ->label('Confirmar Contraseña'),
 
-                Forms\Components\Textarea::make('address')
-                    ->label('Dirección exacta')
-                    ->nullable()
-                    ->maxLength(500)
-                    ->rows(2)
-                    ->columnSpanFull(),
+                        Forms\Components\Select::make('role')
+                            ->label('Rol')
+                            ->options([
+                                'admin' => 'Admin',
+                                'user' => 'Usuario',
+                            ])
+                            ->default('user')
+                            ->required(),
 
-                Forms\Components\Toggle::make('active')
-                    ->label('Activo')
-                    ->default(true),
+                        Forms\Components\Toggle::make('active')
+                            ->label('Activo')
+                            ->default(true)
+                            ->inline(false),
+                    ]),
 
-                Forms\Components\TextInput::make('locker_code')
-                    ->label('Código de Casillero (opcional)')
-                    ->nullable()
-                    ->placeholder('Dejar en blanco para generar automáticamente')
-                    ->unique(ignoreRecord: true),
+                Forms\Components\Section::make('Casillero y fidelidad')
+                    ->icon('heroicon-o-archive-box')
+                    ->columns(2)
+                    ->schema([
+                        Forms\Components\TextInput::make('locker_code')
+                            ->label('Código de Casillero (opcional)')
+                            ->nullable()
+                            ->placeholder('Dejar en blanco para generar automáticamente')
+                            ->unique(ignoreRecord: true),
 
-                Forms\Components\TextInput::make('loyalty_points')
-                    ->label('Puntos de Fidelidad')
-                    ->numeric()
-                    ->integer()
-                    ->minValue(0)
-                    ->default(0)
-                    ->visibleOn('edit'),
+                        Forms\Components\TextInput::make('loyalty_points')
+                            ->label('Puntos de Fidelidad')
+                            ->numeric()
+                            ->integer()
+                            ->minValue(0)
+                            ->default(0)
+                            ->visibleOn('edit'),
+                    ]),
             ]);
     }
 
