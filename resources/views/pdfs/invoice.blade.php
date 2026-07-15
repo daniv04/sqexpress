@@ -41,13 +41,12 @@
             <td style="width: 50%;">
                 @php $logoPath = public_path('images/logo_sqexpress_noback.png'); @endphp
                 @if(file_exists($logoPath))
-                    <img src="{{ $logoPath }}" alt="SQ EXPRESS CR" style="height: 50px; margin-bottom: 8px;"><br>
+                    <img src="{{ $logoPath }}" alt="SQ EXPRESS CR" style="height: 110px; margin-bottom: 8px;"><br>
                 @endif
                 <div class="company-name">SQ EXPRESS CR</div>
                 <div class="company-info">
                     Servicio de Paquetería Internacional<br>
                     Costa Rica<br>
-                    Tel: +506 0000-0000<br>
                     info@sqexpress.com · sqexpress.com
                 </div>
             </td>
@@ -75,26 +74,22 @@
                 <td>Correo:</td>
                 <td>{{ $invoice->user->email }}</td>
             </tr>
-            @if($invoice->user->phone)
             <tr>
                 <td>Teléfono:</td>
-                <td>{{ $invoice->user->phone }}</td>
+                <td>{{ $invoice->user->phone ?: '-' }}</td>
             </tr>
-            @endif
-            @if($invoice->user->address)
+            @php
+                $fullAddress = collect([
+                    $invoice->user->address,
+                    $invoice->user->distrito?->name,
+                    $invoice->user->canton?->name,
+                    $invoice->user->provincia?->name,
+                ])->filter()->implode(', ');
+            @endphp
+            @if($fullAddress)
             <tr>
                 <td>Dirección:</td>
-                <td>{{ $invoice->user->address }}</td>
-            </tr>
-            @endif
-            @if($invoice->user->distrito || $invoice->user->canton || $invoice->user->provincia)
-            <tr>
-                <td>Ubicación:</td>
-                <td>
-                    {{ $invoice->user->distrito?->name }}
-                    @if($invoice->user->canton), {{ $invoice->user->canton->name }}@endif
-                    @if($invoice->user->provincia), {{ $invoice->user->provincia->name }}@endif
-                </td>
+                <td>{{ $fullAddress }}</td>
             </tr>
             @endif
             <tr>
