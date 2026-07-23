@@ -47,7 +47,8 @@
                 <div class="company-info">
                     Servicio de Paquetería Internacional<br>
                     Costa Rica<br>
-                    info@sqexpress.com · sqexpress.com
+                    info@sqexpresscr.com · sqexpresscr.com<br>
+                    WhatsApp: 6444-5555
                 </div>
             </td>
             <td style="width: 50%;">
@@ -79,17 +80,22 @@
                 <td>{{ $invoice->user->phone ?: '-' }}</td>
             </tr>
             @php
-                $fullAddress = collect([
-                    $invoice->user->address,
-                    $invoice->user->distrito?->name,
-                    $invoice->user->canton?->name,
-                    $invoice->user->provincia?->name,
+                $ubicacion = collect([
+                    $invoice->user->provincia?->nombre,
+                    $invoice->user->canton?->nombre,
+                    $invoice->user->distrito?->nombre,
                 ])->filter()->implode(', ');
             @endphp
-            @if($fullAddress)
+            @if($ubicacion)
+            <tr>
+                <td>Ubicación:</td>
+                <td>{{ $ubicacion }}</td>
+            </tr>
+            @endif
+            @if($invoice->user->address)
             <tr>
                 <td>Dirección:</td>
-                <td>{{ $fullAddress }}</td>
+                <td>{{ $invoice->user->address }}</td>
             </tr>
             @endif
             <tr>
@@ -163,7 +169,7 @@
         @if($invoice->discount_amount > 0)
         * Descuento del 10% aplicado por ser tu primera factura con SQ EXPRESS CR.<br>
         @endif
-        Este documento es una factura generada automáticamente. Para consultas escriba a info@sqexpress.com.
+        Este documento es una factura generada automáticamente. Para consultas escriba a info@sqexpresscr.com.
     </div>
 
 </body>

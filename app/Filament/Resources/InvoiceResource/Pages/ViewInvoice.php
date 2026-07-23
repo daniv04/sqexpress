@@ -104,14 +104,16 @@ class ViewInvoice extends ViewRecord
                         ->label('Teléfono')->placeholder('—'),
                     Infolists\Components\TextEntry::make('user.locker_code')
                         ->label('Casillero')->badge()->fontFamily('mono'),
+                    Infolists\Components\TextEntry::make('ubicacion')
+                        ->label('Ubicación')
+                        ->state(fn ($record): string => collect([
+                            $record->user->provincia?->nombre,
+                            $record->user->canton?->nombre,
+                            $record->user->distrito?->nombre,
+                        ])->filter()->implode(', '))
+                        ->placeholder('—'),
                     Infolists\Components\TextEntry::make('user.address')
                         ->label('Dirección')->placeholder('—'),
-                    Infolists\Components\TextEntry::make('user.distrito.name')
-                        ->label('Distrito')->placeholder('—'),
-                    Infolists\Components\TextEntry::make('user.canton.name')
-                        ->label('Cantón')->placeholder('—'),
-                    Infolists\Components\TextEntry::make('user.provincia.name')
-                        ->label('Provincia')->placeholder('—'),
                 ]),
         ]);
     }
