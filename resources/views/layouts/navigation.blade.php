@@ -19,6 +19,9 @@
                         <x-nav-link :href="route('mis-paquetes')" :active="request()->routeIs('mis-paquetes')">
                             {{ __('Mis Paquetes') }}
                         </x-nav-link>
+                        <x-nav-link :href="route('mis-facturas')" :active="request()->routeIs('mis-facturas')">
+                            {{ __('Mis Facturas') }}
+                        </x-nav-link>
                     @endif
                 </div>
             </div>
@@ -86,6 +89,9 @@
                 </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('mis-paquetes')" :active="request()->routeIs('mis-paquetes')">
                     {{ __('Mis Paquetes') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('mis-facturas')" :active="request()->routeIs('mis-facturas')">
+                    {{ __('Mis Facturas') }}
                 </x-responsive-nav-link>
             @endif
         </div>

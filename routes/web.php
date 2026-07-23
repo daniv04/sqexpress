@@ -3,6 +3,7 @@
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PackageController;
 use App\Http\Controllers\PanelController;
+use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\Api\GeodataController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -43,6 +44,12 @@ Route::delete('/mis-paquetes/{package}', [PackageController::class, 'destroy'])
 
 Route::patch('/mis-paquetes/{package}/ocultar', [PackageController::class, 'hide'])
     ->middleware(['auth', 'verified'])->name('package.hide');
+
+Route::get('/mis-facturas', [InvoiceController::class, 'index'])
+    ->middleware(['auth', 'verified'])->name('mis-facturas');
+
+Route::get('/mis-facturas/{invoice}/pdf', [InvoiceController::class, 'download'])
+    ->middleware(['auth', 'verified'])->name('invoice.download');
 
 
 Route::middleware('auth')->group(function () {
