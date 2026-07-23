@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Provincia;
 use App\Models\Canton;
 use App\Models\Distrito;
+use App\Models\Barrio;
 
 class GeodataService
 {
@@ -27,6 +28,14 @@ class GeodataService
     {
         return Distrito::where('canton_id', $cantonId)
             ->select('id', 'codigo', 'nombre', 'canton_id')
+            ->orderBy('nombre')
+            ->get();
+    }
+
+    public function getBarriosByDistrito(int $distritoId)
+    {
+        return Barrio::where('distrito_id', $distritoId)
+            ->select('id', 'codigo', 'nombre', 'distrito_id')
             ->orderBy('nombre')
             ->get();
     }

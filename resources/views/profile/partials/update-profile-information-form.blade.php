@@ -80,8 +80,8 @@
             </div>
         </div>
 
-        <!-- Current Location Display - 3 Columns (Read-only) -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700">
+        <!-- Current Location Display - 4 Columns (Read-only) -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700">
             <div>
                 <p class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('Provincia Guardada') }}</p>
                 <p class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ $user->provincia->nombre ?? __('No asignada') }}</p>
@@ -96,10 +96,15 @@
                 <p class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('Distrito Guardado') }}</p>
                 <p class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ $user->distrito->nombre ?? __('No asignado') }}</p>
             </div>
+
+            <div>
+                <p class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ __('Barrio Guardado') }}</p>
+                <p class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ $user->barrio->nombre ?? __('No asignado') }}</p>
+            </div>
         </div>
 
-        <!-- Provincia, Canton, Distrito - 3 Columns -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <!-- Provincia, Canton, Distrito, Barrio - 4 Columns -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
             <div>
                 <x-input-label for="provincia_id" :value="__('Provincia')" />
                 <select id="provincia_id" name="provincia_id"
@@ -133,6 +138,7 @@
                 <x-input-label for="distrito_id" :value="__('Distrito')" />
                 <select id="distrito_id" name="distrito_id"
                         x-model="distritoId"
+                        @change="loadBarrios()"
                         :disabled="!cantonId"
                         class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm disabled:opacity-50">
                     <option value="">Seleccione un distrito</option>
@@ -141,6 +147,20 @@
                     </template>
                 </select>
                 <x-input-error class="mt-2" :messages="$errors->get('distrito_id')" />
+            </div>
+
+            <div>
+                <x-input-label for="barrio_id" :value="__('Barrio')" />
+                <select id="barrio_id" name="barrio_id"
+                        x-model="barrioId"
+                        :disabled="!distritoId"
+                        class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm disabled:opacity-50">
+                    <option value="">Seleccione un barrio</option>
+                    <template x-for="barrio in barrios" :key="barrio.id">
+                        <option :value="barrio.id" x-text="barrio.nombre"></option>
+                    </template>
+                </select>
+                <x-input-error class="mt-2" :messages="$errors->get('barrio_id')" />
             </div>
         </div>
 
@@ -173,12 +193,15 @@
                 provinciaId: '{{ old("provincia_id", $user->provincia_id ?? "") }}',
                 cantonId: '{{ old("canton_id", $user->canton_id ?? "") }}',
                 distritoId: '{{ old("distrito_id", $user->distrito_id ?? "") }}',
+                barrioId: '{{ old("barrio_id", $user->barrio_id ?? "") }}',
                 cantones: [],
                 distritos: [],
+                barrios: [],
 
                 async init() {
                     const savedCanton = this.cantonId;
                     const savedDistrito = this.distritoId;
+                    const savedBarrio = this.barrioId;
 
                     if (this.provinciaId) {
                         const res = await fetch(`/api/provincias/${this.provinciaId}/cantones`);
@@ -190,13 +213,20 @@
                         this.distritos = await res.json();
                         this.distritoId = savedDistrito;
                     }
+                    if (this.distritoId) {
+                        const res = await fetch(`/api/distritos/${this.distritoId}/barrios`);
+                        this.barrios = await res.json();
+                        this.barrioId = savedBarrio;
+                    }
                 },
 
                 async loadCantones() {
                     this.cantonId = '';
                     this.distritoId = '';
+                    this.barrioId = '';
                     this.cantones = [];
                     this.distritos = [];
+                    this.barrios = [];
                     if (!this.provinciaId) return;
                     const res = await fetch(`/api/provincias/${this.provinciaId}/cantones`);
                     this.cantones = await res.json();
@@ -204,10 +234,20 @@
 
                 async loadDistritos() {
                     this.distritoId = '';
+                    this.barrioId = '';
                     this.distritos = [];
+                    this.barrios = [];
                     if (!this.cantonId) return;
                     const res = await fetch(`/api/cantones/${this.cantonId}/distritos`);
                     this.distritos = await res.json();
+                },
+
+                async loadBarrios() {
+                    this.barrioId = '';
+                    this.barrios = [];
+                    if (!this.distritoId) return;
+                    const res = await fetch(`/api/distritos/${this.distritoId}/barrios`);
+                    this.barrios = await res.json();
                 },
             }
         }

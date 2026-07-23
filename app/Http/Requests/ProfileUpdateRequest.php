@@ -30,6 +30,7 @@ class ProfileUpdateRequest extends FormRequest
                         'provincia_id' => ['nullable', 'exists:provincias,id'],
                         'canton_id' => ['nullable', 'exists:cantones,id'],
                         'distrito_id' => ['nullable', 'exists:distritos,id'],
+                        'barrio_id' => ['nullable', 'exists:barrios,id'],
             'address' => ['nullable', 'string', 'max:500'],
         ];
     }

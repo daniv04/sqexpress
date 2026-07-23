@@ -34,6 +34,7 @@ class User extends Authenticatable implements FilamentUser
             'provincia_id',
             'canton_id',
             'distrito_id',
+            'barrio_id',
         'locker_code',
         'active',
         'loyalty_points',
@@ -91,6 +92,11 @@ class User extends Authenticatable implements FilamentUser
     public function distrito()
     {
         return $this->belongsTo(Distrito::class);
+    }
+
+    public function barrio()
+    {
+        return $this->belongsTo(Barrio::class);
     }
 
     public function getTotalPointsAttribute(): int

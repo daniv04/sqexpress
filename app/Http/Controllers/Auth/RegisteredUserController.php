@@ -45,6 +45,7 @@ class RegisteredUserController extends Controller
                         'provincia_id' => ['required', 'exists:provincias,id'],
                         'canton_id' => ['required', 'exists:cantones,id'],
                         'distrito_id' => ['required', 'exists:distritos,id'],
+                        'barrio_id' => ['nullable', 'exists:barrios,id'],
             'address' => ['required', 'string', 'max:500'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
@@ -60,6 +61,7 @@ class RegisteredUserController extends Controller
                         'provincia_id' => $request->provincia_id,
                         'canton_id' => $request->canton_id,
                         'distrito_id' => $request->distrito_id,
+                        'barrio_id' => $request->barrio_id,
             'address' => $request->address,
             'locker_code' => $lockerCode,
             'role' => 'user', 

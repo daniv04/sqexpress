@@ -110,6 +110,7 @@ class ViewInvoice extends ViewRecord
                             $record->user->provincia?->nombre,
                             $record->user->canton?->nombre,
                             $record->user->distrito?->nombre,
+                            $record->user->barrio?->nombre,
                         ])->filter()->implode(', '))
                         ->placeholder('—'),
                     Infolists\Components\TextEntry::make('user.address')

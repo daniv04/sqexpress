@@ -63,6 +63,7 @@ Route::prefix('api')->group(function () {
     Route::get('/provincias', [GeodataController::class, 'getProvincias']);
     Route::get('/provincias/{provinciaId}/cantones', [GeodataController::class, 'getCantones']);
     Route::get('/cantones/{cantonId}/distritos', [GeodataController::class, 'getDistritos']);
+    Route::get('/distritos/{distritoId}/barrios', [GeodataController::class, 'getBarrios']);
 });
 
 Route::get('/admin/facturas/{invoice}/pdf', function (\App\Models\Invoice $invoice, \App\Services\DbService\InvoiceService $invoiceService) {

@@ -20,7 +20,7 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): View
     {
-        $user = $request->user()->load(['provincia', 'canton', 'distrito']);
+        $user = $request->user()->load(['provincia', 'canton', 'distrito', 'barrio']);
         $provincias = $this->geodataService->getProvincias();
         $shippingMethods = ShippingMethod::where('active', true)
             ->whereNotNull('pais')

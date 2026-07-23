@@ -32,4 +32,10 @@ class GeodataController extends Controller
         $distritos = $this->geodataService->getDistritosByCanton($cantonId);
         return response()->json($distritos);
     }
+
+    public function getBarrios(int $distritoId): JsonResponse
+    {
+        $barrios = $this->geodataService->getBarriosByDistrito($distritoId);
+        return response()->json($barrios);
+    }
 }

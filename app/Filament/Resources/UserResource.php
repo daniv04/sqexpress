@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\UserResource\Pages;
+use App\Models\Barrio;
 use App\Models\Canton;
 use App\Models\Distrito;
 use App\Models\Provincia;
@@ -61,7 +62,7 @@ class UserResource extends Resource
 
                 Forms\Components\Section::make('Ubicación')
                     ->icon('heroicon-o-map-pin')
-                    ->columns(3)
+                    ->columns(4)
                     ->schema([
                         Forms\Components\Select::make('provincia_id')
                             ->label('Provincia')
@@ -88,6 +89,16 @@ class UserResource extends Resource
                             ->label('Distrito')
                             ->options(fn (Forms\Get $get) => $get('canton_id')
                                 ? Distrito::where('canton_id', $get('canton_id'))->orderBy('nombre')->pluck('nombre', 'id')
+                                : [])
+                            ->searchable()
+                            ->nullable()
+                            ->live()
+                            ->afterStateUpdated(fn (Forms\Set $set) => $set('barrio_id', null)),
+
+                        Forms\Components\Select::make('barrio_id')
+                            ->label('Barrio')
+                            ->options(fn (Forms\Get $get) => $get('distrito_id')
+                                ? Barrio::where('distrito_id', $get('distrito_id'))->orderBy('nombre')->pluck('nombre', 'id')
                                 : [])
                             ->searchable()
                             ->nullable(),

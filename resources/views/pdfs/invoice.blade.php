@@ -84,6 +84,7 @@
                     $invoice->user->provincia?->nombre,
                     $invoice->user->canton?->nombre,
                     $invoice->user->distrito?->nombre,
+                    $invoice->user->barrio?->nombre,
                 ])->filter()->implode(', ');
             @endphp
             @if($ubicacion)

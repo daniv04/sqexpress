@@ -108,7 +108,7 @@ class InvoiceService
 
     public function buildPdf(Invoice $invoice): \Barryvdh\DomPDF\PDF
     {
-        $invoice->load(['user.provincia', 'user.canton', 'user.distrito', 'packages.shippingMethod']);
+        $invoice->load(['user.provincia', 'user.canton', 'user.distrito', 'user.barrio', 'packages.shippingMethod']);
 
         return Pdf::loadView('pdfs.invoice', compact('invoice'))->setPaper('letter', 'portrait');
     }

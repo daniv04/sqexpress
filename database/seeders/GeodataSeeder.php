@@ -7,6 +7,7 @@ use Illuminate\Database\Seeder;
 use App\Models\Provincia;
 use App\Models\Canton;
 use App\Models\Distrito;
+use App\Models\Barrio;
 use Illuminate\Support\Facades\File;
 
 class GeodataSeeder extends Seeder
@@ -16,7 +17,7 @@ class GeodataSeeder extends Seeder
      */
     public function run(): void
     {
-        if (Provincia::exists()) {
+        if (Provincia::exists() && Barrio::exists()) {
             return;
         }
 
@@ -25,27 +26,33 @@ class GeodataSeeder extends Seeder
         $geodata = json_decode(File::get($jsonPath), true);
 
         foreach ($geodata as $provinciaData) {
-            // Crear provincia
-            $provincia = Provincia::create([
-                'codigo' => $provinciaData['codigo'],
-                'nombre' => $provinciaData['nombre'],
-            ]);
+            // Crear provincia (o reutilizar si ya existe, para poder rellenar barrios sin duplicar)
+            $provincia = Provincia::firstOrCreate(
+                ['codigo' => $provinciaData['codigo']],
+                ['nombre' => $provinciaData['nombre']]
+            );
 
             // Crear cantones de la provincia
             foreach ($provinciaData['cantones'] as $cantonData) {
-                $canton = Canton::create([
-                    'codigo' => $cantonData['codigo'],
-                    'nombre' => $cantonData['nombre'],
-                    'provincia_id' => $provincia->id,
-                ]);
+                $canton = Canton::firstOrCreate(
+                    ['codigo' => $cantonData['codigo'], 'provincia_id' => $provincia->id],
+                    ['nombre' => $cantonData['nombre']]
+                );
 
                 // Crear distritos del cantón
                 foreach ($cantonData['distritos'] as $distritoData) {
-                    Distrito::create([
-                        'codigo' => $distritoData['codigo'],
-                        'nombre' => $distritoData['nombre'],
-                        'canton_id' => $canton->id,
-                    ]);
+                    $distrito = Distrito::firstOrCreate(
+                        ['codigo' => $distritoData['codigo'], 'canton_id' => $canton->id],
+                        ['nombre' => $distritoData['nombre']]
+                    );
+
+                    // Crear barrios del distrito
+                    foreach ($distritoData['barrios'] as $barrioData) {
+                        Barrio::firstOrCreate(
+                            ['codigo' => $barrioData['codigo'], 'distrito_id' => $distrito->id],
+                            ['nombre' => $barrioData['nombre']]
+                        );
+                    }
                 }
             }
         }

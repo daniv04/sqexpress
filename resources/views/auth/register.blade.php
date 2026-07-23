@@ -34,7 +34,7 @@
 
         </div>
 
-        <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="mt-4 grid grid-cols-1 md:grid-cols-4 gap-4">
         <!-- Provincia -->
         <div>
             <x-input-label for="provincia_id" :value="__('Provincia')" />
@@ -62,13 +62,25 @@
         <!-- Distrito -->
         <div>
             <x-input-label for="distrito_id" :value="__('Distrito')" />
-            <select id="distrito_id" name="distrito_id" x-model="distritoId" :disabled="!cantonId" required class="block mt-1 w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm disabled:opacity-50">
+            <select id="distrito_id" name="distrito_id" x-model="distritoId" @change="loadBarrios" :disabled="!cantonId" required class="block mt-1 w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm disabled:opacity-50">
                 <option value="">Seleccione un distrito</option>
                 <template x-for="distrito in distritos" :key="distrito.id">
                     <option :value="distrito.id" x-text="distrito.nombre"></option>
                 </template>
             </select>
             <x-input-error :messages="$errors->get('distrito_id')" class="mt-2" />
+        </div>
+
+        <!-- Barrio -->
+        <div>
+            <x-input-label for="barrio_id" :value="__('Barrio')" />
+            <select id="barrio_id" name="barrio_id" x-model="barrioId" :disabled="!distritoId" class="block mt-1 w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm disabled:opacity-50">
+                <option value="">Seleccione un barrio</option>
+                <template x-for="barrio in barrios" :key="barrio.id">
+                    <option :value="barrio.id" x-text="barrio.nombre"></option>
+                </template>
+            </select>
+            <x-input-error :messages="$errors->get('barrio_id')" class="mt-2" />
         </div>
         </div>
 
@@ -122,9 +134,11 @@
                 provinciaId: parseInt('{{ old("provincia_id") }}') || '',
                 cantonId: parseInt('{{ old("canton_id") }}') || '',
                 distritoId: parseInt('{{ old("distrito_id") }}') || '',
+                barrioId: parseInt('{{ old("barrio_id") }}') || '',
                 provincias: [],
                 cantones: [],
                 distritos: [],
+                barrios: [],
 
                 async init() {
                     await this.loadProvincias();
@@ -132,6 +146,9 @@
                         await this.loadCantones();
                         if (this.cantonId) {
                             await this.loadDistritos();
+                            if (this.distritoId) {
+                                await this.loadBarrios();
+                            }
                         }
                     }
                 },
@@ -144,9 +161,11 @@
                 async loadCantones() {
                     this.cantonId = '';
                     this.distritoId = '';
+                    this.barrioId = '';
                     this.cantones = [];
                     this.distritos = [];
-                    
+                    this.barrios = [];
+
                     if (!this.provinciaId) return;
                     
                     const response = await fetch(`/api/provincias/${this.provinciaId}/cantones`);
@@ -155,12 +174,24 @@
 
                 async loadDistritos() {
                     this.distritoId = '';
+                    this.barrioId = '';
                     this.distritos = [];
-                    
+                    this.barrios = [];
+
                     if (!this.cantonId) return;
-                    
+
                     const response = await fetch(`/api/cantones/${this.cantonId}/distritos`);
                     this.distritos = await response.json();
+                },
+
+                async loadBarrios() {
+                    this.barrioId = '';
+                    this.barrios = [];
+
+                    if (!this.distritoId) return;
+
+                    const response = await fetch(`/api/distritos/${this.distritoId}/barrios`);
+                    this.barrios = await response.json();
                 }
             }
         }

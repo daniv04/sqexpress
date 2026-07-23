@@ -12,4 +12,9 @@ class Distrito extends Model
     {
         return $this->belongsTo(Canton::class);
     }
+
+    public function barrios()
+    {
+        return $this->hasMany(Barrio::class);
+    }
 }
