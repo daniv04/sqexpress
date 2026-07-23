@@ -2,7 +2,13 @@
     <!-- Session Status -->
     <x-auth-session-status class="mb-4" :status="session('status')" />
 
-    <form method="POST" action="{{ route('login') }}">
+    @if (session('error'))
+        <div class="mb-4 font-medium text-sm text-red-600 dark:text-red-400">
+            {{ session('error') }}
+        </div>
+    @endif
+
+    <form method="POST" action="{{ route('login') }}" x-data="{ submitting: false }" @submit="submitting = true">
         @csrf
 
         <!-- Email Address -->
@@ -42,8 +48,9 @@
                     {{ __('¿No tienes una cuenta?') }}
                 </a>
 
-            <x-primary-button class="ms-3">
-                {{ __('Iniciar sesión') }}
+            <x-primary-button class="ms-3" x-bind:disabled="submitting" x-bind:class="{ 'opacity-50 cursor-not-allowed': submitting }">
+                <span x-show="!submitting">{{ __('Iniciar sesión') }}</span>
+                <span x-show="submitting" x-cloak>{{ __('Ingresando...') }}</span>
             </x-primary-button>
         </div>
     </form>
