@@ -73,6 +73,7 @@ class UserResource extends Resource
                             ->afterStateUpdated(function (Forms\Set $set): void {
                                 $set('canton_id', null);
                                 $set('distrito_id', null);
+                                $set('barrio_id', null);
                             }),
 
                         Forms\Components\Select::make('canton_id')
@@ -83,7 +84,10 @@ class UserResource extends Resource
                             ->searchable()
                             ->nullable()
                             ->live()
-                            ->afterStateUpdated(fn (Forms\Set $set) => $set('distrito_id', null)),
+                            ->afterStateUpdated(function (Forms\Set $set): void {
+                                $set('distrito_id', null);
+                                $set('barrio_id', null);
+                            }),
 
                         Forms\Components\Select::make('distrito_id')
                             ->label('Distrito')
