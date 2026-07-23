@@ -18,10 +18,10 @@ class PanelController extends Controller
         $statuses = [
             'prealerted' => 'Prealertado',
             'received_in_warehouse' => 'Recibido en Bodega',
-            'assigned_flight' => 'Vuelo/Embarcación Asignada',
+            'assigned_flight' => 'Programado para Envío',
             'in_transit' => 'En Tránsito a CR',
             'received_in_customs' => 'Recibido en Aduanas',
-            'customs_process_finished' => 'Procesos de Aduanas Finalizado',
+            'customs_process_finished' => 'Liberado de Aduana',
             'received_in_business' => 'Recibido en Negocio',
             'ready_to_deliver' => 'Listo para Entregar',
             'delivered' => 'Entregado',

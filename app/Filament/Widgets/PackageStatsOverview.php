@@ -30,7 +30,7 @@ class PackageStatsOverview extends BaseWidget
                 ->icon('heroicon-o-building-storefront')
                 ->color('info'),
 
-            Stat::make('Vuelo/Embarcación asignada', $counts->get(PackageStatus::ASSIGNED_FLIGHT->value, 0))
+            Stat::make('Programado para envío', $counts->get(PackageStatus::ASSIGNED_FLIGHT->value, 0))
                 ->icon('heroicon-o-paper-airplane')
                 ->color('info'),
 
@@ -42,7 +42,7 @@ class PackageStatsOverview extends BaseWidget
                 ->icon('heroicon-o-shield-check')
                 ->color('warning'),
 
-            Stat::make('Procesos de aduanas finalizado', $counts->get(PackageStatus::CUSTOMS_PROCESS_FINISHED->value, 0))
+            Stat::make('Liberado de aduana', $counts->get(PackageStatus::CUSTOMS_PROCESS_FINISHED->value, 0))
                 ->icon('heroicon-o-clipboard-document-check')
                 ->color('warning'),
 
