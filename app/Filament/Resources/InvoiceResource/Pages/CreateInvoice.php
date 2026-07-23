@@ -28,7 +28,12 @@ class CreateInvoice extends CreateRecord
                     ->schema([
                         Forms\Components\Select::make('user_id')
                             ->label('Cliente')
-                            ->options(User::where('role', '!=', 'admin')->orderBy('name')->pluck('name', 'id'))
+                            ->options(User::where('role', '!=', 'admin')
+                                ->whereHas('packages', fn ($query) => $query
+                                    ->where('status', PackageStatus::READY_TO_DELIVER->value)
+                                    ->whereNull('invoice_id'))
+                                ->orderBy('name')
+                                ->pluck('name', 'id'))
                             ->searchable()
                             ->required()
                             ->live()
