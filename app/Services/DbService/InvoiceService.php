@@ -5,7 +5,6 @@ namespace App\Services\DbService;
 use App\Events\InvoiceGenerated;
 use App\Models\AppSetting;
 use App\Models\Invoice;
-use App\Models\Package;
 use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Collection;
@@ -45,12 +44,7 @@ class InvoiceService
     /**
      * Generate an invoice for multiple packages from the same user.
      *
-     * @param User $user
-     * @param Collection $packages
-     * @param float $deliveryFee
-     * @param int $adminId
-     * @param bool $applyNewClientDiscount Admin can opt out of the first-invoice discount.
-     * @return Invoice
+     * @param  bool  $applyNewClientDiscount  Admin can opt out of the first-invoice discount.
      */
     public function generateAndPersistInvoice(
         User $user,
@@ -63,11 +57,13 @@ class InvoiceService
             $subtotal = $packages->sum('service_cost');
             $isFirst = $applyNewClientDiscount && $this->isFirstInvoice($user);
             $discount = $this->calculateDiscount($subtotal, $isFirst);
-            $total = $subtotal - $discount + $deliveryFee;
+            $total = $subtotal - $discount;
             $points = $this->calculatePoints($total);
 
             $rate = (float) AppSetting::get('exchange_rate_usd_crc', 0);
-            $totalCrc = $rate > 0 ? round($total * $rate, 2) : null;
+            $totalCrc = ($rate > 0 || $deliveryFee > 0)
+                ? round(($rate > 0 ? $total * $rate : 0) + $deliveryFee, 2)
+                : null;
 
             $invoiceNumber = $this->generateInvoiceNumber();
 
@@ -115,6 +111,6 @@ class InvoiceService
 
     private function formatInvoiceNumber(int $number): string
     {
-        return 'FAC-' . str_pad($number, 6, '0', STR_PAD_LEFT);
+        return 'FAC-'.str_pad($number, 6, '0', STR_PAD_LEFT);
     }
 }

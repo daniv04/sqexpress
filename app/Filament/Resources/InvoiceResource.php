@@ -4,22 +4,28 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\InvoiceResource\Pages;
 use App\Models\Invoice;
+use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Table;
-use Filament\Forms;
 use Illuminate\Database\Eloquent\Builder;
 
 class InvoiceResource extends Resource
 {
     protected static ?string $model = Invoice::class;
+
     protected static ?string $slug = 'facturas';
+
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
+
     protected static ?string $navigationLabel = 'Facturas';
+
     protected static ?string $modelLabel = 'Factura';
+
     protected static ?string $pluralModelLabel = 'Facturas';
+
     protected static ?int $navigationSort = 2;
 
     public static function form(Form $form): Form
@@ -51,7 +57,7 @@ class InvoiceResource extends Resource
                     ->tooltip(fn ($state): string => (float) $state > 0 ? "10% cliente nuevo: -\${$state}" : ''),
                 Tables\Columns\TextColumn::make('delivery_fee')
                     ->label('Entrega')
-                    ->prefix('$')
+                    ->prefix('₡')
                     ->sortable()
                     ->visible(fn ($record) => $record && (float) $record->delivery_fee > 0),
                 Tables\Columns\TextColumn::make('total')
@@ -84,14 +90,17 @@ class InvoiceResource extends Resource
             ->bulkActions([]);
     }
 
-    public static function getRelations(): array { return []; }
+    public static function getRelations(): array
+    {
+        return [];
+    }
 
     public static function getPages(): array
     {
         return [
             'index' => Pages\ListInvoices::route('/'),
             'create' => Pages\CreateInvoice::route('/create'),
-            'view'  => Pages\ViewInvoice::route('/{record}'),
+            'view' => Pages\ViewInvoice::route('/{record}'),
         ];
     }
 }

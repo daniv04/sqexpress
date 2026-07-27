@@ -155,7 +155,7 @@ class CreateInvoice extends CreateRecord
                             ->live(),
 
                         Forms\Components\TextInput::make('delivery_fee')
-                            ->label('Cargo por entrega (USD)')
+                            ->label('Cargo por entrega (₡)')
                             ->numeric()
                             ->minValue(0)
                             ->default(0)
@@ -216,7 +216,7 @@ class CreateInvoice extends CreateRecord
 
                                 $deliveryFee = (float) ($get('delivery_fee') ?? 0);
 
-                                return '$'.number_format($deliveryFee, 2);
+                                return '₡'.number_format($deliveryFee, 2);
                             })
                             ->live(),
 
@@ -239,13 +239,14 @@ class CreateInvoice extends CreateRecord
                                 $applies = $get('apply_new_client_discount') && $service->isFirstInvoice($user);
                                 $discount = $service->calculateDiscount($subtotal, $applies);
                                 $deliveryFee = (float) ($get('has_delivery_fee') ? ($get('delivery_fee') ?? 0) : 0);
-                                $total = $subtotal - $discount + $deliveryFee;
+                                $total = $subtotal - $discount; // USD total excludes delivery (delivery is charged in CRC)
 
                                 $totalPreview = '$'.number_format($total, 2);
 
                                 $rate = (float) AppSetting::get('exchange_rate_usd_crc', 0);
-                                if ($rate > 0) {
-                                    $totalPreview .= ' · ₡'.number_format(round($total * $rate, 2), 2);
+                                if ($rate > 0 || $deliveryFee > 0) {
+                                    $totalCrc = round(($rate > 0 ? $total * $rate : 0) + $deliveryFee, 2);
+                                    $totalPreview .= ' · ₡'.number_format($totalCrc, 2);
                                 }
 
                                 return $totalPreview;

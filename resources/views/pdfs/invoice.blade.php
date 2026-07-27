@@ -145,18 +145,20 @@
         @if($invoice->delivery_fee > 0)
         <tr>
             <td style="color: #6b7280;">Cargo por entrega:</td>
-            <td>${{ number_format($invoice->delivery_fee, 2) }}</td>
+            <td>₡{{ number_format($invoice->delivery_fee, 2) }}</td>
         </tr>
         @endif
         <tr class="total">
             <td>Total:</td>
             <td>${{ number_format($invoice->total, 2) }}</td>
         </tr>
+        @if($invoice->total_crc !== null)
         @if($invoice->exchange_rate !== null)
         <tr>
             <td style="color: #6b7280;">Tipo de cambio:</td>
             <td>₡{{ number_format($invoice->exchange_rate, 2) }}</td>
         </tr>
+        @endif
         <tr class="total">
             <td>Total a pagar (CRC):</td>
             <td>₡{{ number_format($invoice->total_crc, 2) }}</td>

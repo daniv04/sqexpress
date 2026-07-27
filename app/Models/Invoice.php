@@ -30,6 +30,7 @@ class Invoice extends Model
         return [
             'subtotal' => 'decimal:2',
             'discount_amount' => 'decimal:2',
+            // stored in CRC (colones), not USD
             'delivery_fee' => 'decimal:2',
             'total' => 'decimal:2',
             'exchange_rate' => 'decimal:2',

@@ -3,13 +3,14 @@
 namespace App\Filament\Resources\InvoiceResource\Pages;
 
 use App\Filament\Resources\InvoiceResource;
-use App\Filament\Resources\PackageResource;
 use App\Services\DbService\InvoiceService;
 use Filament\Actions;
 use Filament\Infolists;
+use Filament\Infolists\Components\TextEntry\TextEntrySize;
 use Filament\Infolists\Infolist;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
+use Filament\Support\Enums\FontWeight;
 
 class ViewInvoice extends ViewRecord
 {
@@ -57,20 +58,20 @@ class ViewInvoice extends ViewRecord
                         ->color('success')
                         ->visible(fn ($record): bool => (float) $record->discount_amount > 0),
                     Infolists\Components\TextEntry::make('delivery_fee')
-                        ->label('Cargo por entrega')->prefix('$')
+                        ->label('Cargo por entrega')->prefix('₡')
                         ->color('warning')
                         ->visible(fn ($record): bool => (float) $record->delivery_fee > 0),
                     Infolists\Components\TextEntry::make('total')
                         ->label('Total')
                         ->prefix('$')
-                        ->weight(\Filament\Support\Enums\FontWeight::Bold)
-                        ->size(\Filament\Infolists\Components\TextEntry\TextEntrySize::Large),
+                        ->weight(FontWeight::Bold)
+                        ->size(TextEntrySize::Large),
                     Infolists\Components\TextEntry::make('total_crc')
                         ->label('Total a pagar (CRC)')
                         ->prefix('₡')
-                        ->weight(\Filament\Support\Enums\FontWeight::Bold)
-                        ->size(\Filament\Infolists\Components\TextEntry\TextEntrySize::Large)
-                        ->visible(fn ($record): bool => $record->exchange_rate !== null),
+                        ->weight(FontWeight::Bold)
+                        ->size(TextEntrySize::Large)
+                        ->visible(fn ($record): bool => $record->total_crc !== null),
                     Infolists\Components\TextEntry::make('points_earned')
                         ->label('Puntos otorgados')->suffix(' pts'),
                 ]),
