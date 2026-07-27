@@ -6,7 +6,7 @@ use App\Models\ShippingMethod;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\ShippingMethod>
+ * @extends Factory<ShippingMethod>
  */
 class ShippingMethodFactory extends Factory
 {
@@ -21,6 +21,8 @@ class ShippingMethodFactory extends Factory
                 'Courier Express',
             ]),
             'active' => true,
+            'unit_type' => 'kg',
+            'price_per_unit' => fake()->randomFloat(2, 1, 10),
         ];
     }
 }

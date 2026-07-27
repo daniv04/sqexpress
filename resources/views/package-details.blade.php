@@ -105,7 +105,7 @@
                             </label>
                             <p class="text-base text-gray-900 dark:text-gray-100">
                                 @if($package->weight)
-                                    {{ number_format($package->weight, 2) }} kg
+                                    {{ number_format($package->weight, 2) }} {{ $package->shippingMethod?->unitSuffix() ?? 'kg' }}
                                 @else
                                     <span class="text-gray-400">—</span>
                                 @endif

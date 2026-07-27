@@ -122,7 +122,7 @@
             <tr>
                 <td>{{ $package->tracking }}</td>
                 <td><span class="type-badge">{{ $package->shippingMethod?->name ?? 'N/A' }}</span></td>
-                <td class="right">{{ $package->weight ? number_format($package->weight, 2) . ' kg' : '—' }}</td>
+                <td class="right">{{ $package->weight ? number_format($package->weight, 2) . ' ' . ($package->shippingMethod?->unitSuffix() ?? 'kg') : '—' }}</td>
                 <td class="right">${{ number_format($package->service_cost, 2) }}</td>
                 <td class="right">${{ number_format($package->service_cost, 2) }}</td>
             </tr>

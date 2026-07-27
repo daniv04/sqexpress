@@ -30,7 +30,6 @@ class Configuracion extends Page implements HasForms
     public function mount(): void
     {
         $this->form->fill([
-            'price_per_kg' => AppSetting::get('price_per_kg', 0),
             'exchange_rate_usd_crc' => AppSetting::get('exchange_rate_usd_crc', 0),
         ]);
     }
@@ -39,14 +38,6 @@ class Configuracion extends Page implements HasForms
     {
         return $form
             ->schema([
-                TextInput::make('price_per_kg')
-                    ->label('Precio por kilogramo (USD)')
-                    ->numeric()
-                    ->minValue(0.01)
-                    ->required()
-                    ->prefix('$')
-                    ->helperText('Este precio se usará para calcular el costo del servicio al generar facturas.'),
-
                 TextInput::make('exchange_rate_usd_crc')
                     ->label('Tipo de cambio (USD → CRC)')
                     ->numeric()
@@ -71,7 +62,6 @@ class Configuracion extends Page implements HasForms
     {
         $data = $this->form->getState();
 
-        AppSetting::set('price_per_kg', $data['price_per_kg']);
         AppSetting::set('exchange_rate_usd_crc', $data['exchange_rate_usd_crc']);
 
         Notification::make()

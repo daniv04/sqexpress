@@ -39,6 +39,20 @@ class ShippingMethodResource extends Resource
                     ->label('Activo')
                     ->default(true),
 
+                Forms\Components\Select::make('unit_type')
+                    ->label('Unidad de cobro')
+                    ->options(ShippingMethod::UNIT_OPTIONS)
+                    ->default('kg')
+                    ->required(),
+
+                Forms\Components\TextInput::make('price_per_unit')
+                    ->label('Precio por unidad (USD)')
+                    ->numeric()
+                    ->minValue(0)
+                    ->required()
+                    ->prefix('$')
+                    ->helperText('Precio cobrado por cada kg/lb/m³ según la unidad seleccionada.'),
+
                 Forms\Components\Section::make('Datos de dirección del casillero')
                     ->columns(2)
                     ->schema([
@@ -87,6 +101,14 @@ class ShippingMethodResource extends Resource
                 Tables\Columns\IconColumn::make('active')
                     ->label('Activo')
                     ->boolean(),
+
+                Tables\Columns\TextColumn::make('unit_type')
+                    ->label('Unidad')
+                    ->formatStateUsing(fn (?string $state): string => ShippingMethod::UNIT_OPTIONS[$state] ?? $state),
+
+                Tables\Columns\TextColumn::make('price_per_unit')
+                    ->label('Precio')
+                    ->prefix('$'),
 
                 Tables\Columns\TextColumn::make('packages_count')
                     ->label('Paquetes')

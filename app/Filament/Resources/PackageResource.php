@@ -3,15 +3,11 @@
 namespace App\Filament\Resources;
 
 use App\Enums\PackageStatus;
-use App\Filament\Resources\InvoiceResource;
 use App\Filament\Resources\PackageResource\Pages;
-use App\Models\AppSetting;
 use App\Models\Package;
 use App\Models\ShippingMethod;
 use App\Services\DbService\PackageService;
 use DomainException;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\HtmlString;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
@@ -19,6 +15,8 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\HtmlString;
 
 class PackageResource extends Resource
 {
@@ -50,7 +48,8 @@ class PackageResource extends Resource
                         Forms\Components\Select::make('shipping_method_id')
                             ->label('Método de envío')
                             ->options(ShippingMethod::where('active', true)->pluck('name', 'id'))
-                            ->required(),
+                            ->required()
+                            ->live(),
 
                         Forms\Components\Select::make('user_id')
                             ->label('Cliente')
@@ -66,7 +65,7 @@ class PackageResource extends Resource
                             ->columnSpanFull(),
 
                         Forms\Components\TextInput::make('weight')
-                            ->label('Peso (kg)')
+                            ->label(fn (Forms\Get $get): string => self::weightFieldLabel($get('shipping_method_id')))
                             ->numeric()
                             ->minValue(0)
                             ->visible(fn (?Package $record): bool => $record !== null
@@ -133,9 +132,10 @@ class PackageResource extends Resource
 
                 Tables\Columns\TextColumn::make('weight')
                     ->label('Peso')
-                    ->suffix(' kg')
-                    ->sortable()
-                    ->placeholder('—'),
+                    ->formatStateUsing(fn ($state, Package $record): string => $state !== null
+                        ? number_format((float) $state, 2).' '.($record->shippingMethod?->unitSuffix() ?? 'kg')
+                        : '—')
+                    ->sortable(),
 
                 Tables\Columns\TextColumn::make('shelf_location')
                     ->label('Estante')
@@ -310,11 +310,9 @@ class PackageResource extends Resource
                     ->label('Crear Factura')
                     ->icon('heroicon-o-document-text')
                     ->color('success')
-                    ->visible(fn (Package $record): bool =>
-                        $record->status === PackageStatus::READY_TO_DELIVER->value && !$record->hasInvoice()
+                    ->visible(fn (Package $record): bool => $record->status === PackageStatus::READY_TO_DELIVER->value && ! $record->hasInvoice()
                     )
-                    ->url(fn (Package $record): string =>
-                        InvoiceResource::getUrl('create') . '?user_id=' . $record->user_id
+                    ->url(fn (Package $record): string => InvoiceResource::getUrl('create').'?user_id='.$record->user_id
                     ),
 
                 Tables\Actions\ViewAction::make(),
@@ -353,7 +351,8 @@ class PackageResource extends Resource
             Forms\Components\Select::make('shipping_method_id')
                 ->label('Método de envío')
                 ->options(ShippingMethod::where('active', true)->pluck('name', 'id'))
-                ->required(),
+                ->required()
+                ->live(),
 
             Forms\Components\TextInput::make('description')
                 ->label('Descripción')
@@ -362,7 +361,7 @@ class PackageResource extends Resource
                 ->columnSpanFull(),
 
             Forms\Components\TextInput::make('weight')
-                ->label('Peso (kg)')
+                ->label(fn (Forms\Get $get): string => self::weightFieldLabel($get('shipping_method_id')))
                 ->numeric()
                 ->minValue(0)
                 ->visible($canAssignWeight),
@@ -376,6 +375,17 @@ class PackageResource extends Resource
                 ->label('Estante')
                 ->maxLength(100),
         ];
+    }
+
+    private static function weightFieldLabel(?int $methodId): string
+    {
+        $method = $methodId ? ShippingMethod::find($methodId) : null;
+
+        return match ($method?->unit_type) {
+            'lb' => 'Cantidad (lb)',
+            'm3' => 'Cantidad (m³)',
+            default => 'Cantidad (kg)',
+        };
     }
 
     private static function fieldLabel(string $field): string
@@ -413,7 +423,7 @@ class PackageResource extends Resource
                 $newValue = ShippingMethod::find($newValue)?->name ?? $newValue;
             }
 
-            $lines[] = e(self::fieldLabel($field)) . ': ' . e($oldValue) . ' → ' . e($newValue);
+            $lines[] = e(self::fieldLabel($field)).': '.e($oldValue).' → '.e($newValue);
         }
 
         return new HtmlString($lines === [] ? 'No se detectaron cambios.' : implode('<br>', $lines));

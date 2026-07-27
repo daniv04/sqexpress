@@ -154,7 +154,7 @@
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                                             @if($package->weight)
-                                                {{ number_format($package->weight, 2) }} kg
+                                                {{ number_format($package->weight, 2) }} {{ $package->shippingMethod?->unitSuffix() ?? 'kg' }}
                                             @else
                                                 <span class="text-gray-400">—</span>
                                             @endif
