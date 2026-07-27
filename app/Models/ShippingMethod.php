@@ -28,6 +28,7 @@ class ShippingMethod extends Model
         'kg' => 'Kilogramo (kg)',
         'lb' => 'Libra (lb)',
         'm3' => 'Metro cúbico (m³)',
+        'ft3' => 'Pie cúbico (ft³)',
     ];
 
     protected function casts(): array
@@ -48,6 +49,7 @@ class ShippingMethod extends Model
         return match ($this->unit_type) {
             'lb' => 'lb',
             'm3' => 'm³',
+            'ft3' => 'ft³',
             default => 'kg',
         };
     }
