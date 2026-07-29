@@ -82,8 +82,9 @@ class SyncPackageStatusesFromApi extends Command
             $tracking = strtoupper($package->tracking);
 
             // Paquete ya recibido físicamente en bodega: la API de paquetes manda.
-            if (isset($paquetesLookup[$tracking])) {
-                if ($this->syncFromPaquete($package, $paquetesLookup[$tracking], $packageService)) {
+            $paqueteMatch = $this->findApiMatch($tracking, $paquetesLookup);
+            if ($paqueteMatch !== null) {
+                if ($this->syncFromPaquete($package, $paqueteMatch, $packageService)) {
                     $updated++;
                 } else {
                     $skipped++;
@@ -93,8 +94,9 @@ class SyncPackageStatusesFromApi extends Command
             }
 
             // Todavía no hay paquete físico: solo puede avanzar de prealertado a recibido en bodega.
-            if ($package->status === PackageStatus::PREALERTED->value && isset($prealertasLookup[$tracking])) {
-                if ($this->syncFromPrealerta($package, $prealertasLookup[$tracking], $packageService)) {
+            $prealertaMatch = $this->findApiMatch($tracking, $prealertasLookup);
+            if ($package->status === PackageStatus::PREALERTED->value && $prealertaMatch !== null) {
+                if ($this->syncFromPrealerta($package, $prealertaMatch, $packageService)) {
                     $updated++;
                 } else {
                     $skipped++;
@@ -216,6 +218,30 @@ class SyncPackageStatusesFromApi extends Command
 
             $package->refresh();
         }
+    }
+
+    /**
+     * La bodega a veces antepone dígitos al tracking original (ej. código de contenedor
+     * + tracking real), por lo que un match exacto por key falla. Se cae a comparar por
+     * sufijo: si uno termina con el otro, se considera el mismo paquete.
+     */
+    private function findApiMatch(string $tracking, array $lookup): ?array
+    {
+        if (isset($lookup[$tracking])) {
+            return $lookup[$tracking];
+        }
+
+        if (strlen($tracking) < 8) {
+            return null; // Muy corto para un match por sufijo confiable
+        }
+
+        foreach ($lookup as $apiTracking => $item) {
+            if (str_ends_with($apiTracking, $tracking) || str_ends_with($tracking, $apiTracking)) {
+                return $item;
+            }
+        }
+
+        return null;
     }
 
     private function fetchAllPages(MlcLogisticsClient $mlc, string $path, string $itemsKey): array

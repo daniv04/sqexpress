@@ -271,6 +271,49 @@ class SyncPackageStatusesFromApiTest extends TestCase
     }
 
     // -------------------------------------------------------------------------
+    // Match por sufijo (bodega antepone dígitos al tracking original)
+    // -------------------------------------------------------------------------
+
+    public function test_matches_when_api_tracking_has_prefixed_digits(): void
+    {
+        $package = $this->makePackage('9400108106244340172583', 'received_in_warehouse');
+
+        $this->fakeMlc(paquetes: [
+            ['tracking' => '4203312616129400108106244340172583', 'estatus' => 'Manifiesto Programado', 'peso_real' => 1.0],
+        ]);
+
+        $this->artisan('packages:sync-statuses')->assertSuccessful();
+
+        $this->assertEquals('assigned_flight', $package->refresh()->status);
+    }
+
+    public function test_matches_prealerta_with_prefixed_digits(): void
+    {
+        $package = $this->makePackage('9400108106244340172583', 'prealerted', weight: 0.0);
+
+        $this->fakeMlc(prealertas: [
+            ['numero_seguimiento' => '4203312616129400108106244340172583', 'estatus' => 1],
+        ]);
+
+        $this->artisan('packages:sync-statuses')->assertSuccessful();
+
+        $this->assertEquals('received_in_warehouse', $package->refresh()->status);
+    }
+
+    public function test_does_not_match_unrelated_short_trackings(): void
+    {
+        $package = $this->makePackage('TRK99', 'received_in_warehouse');
+
+        $this->fakeMlc(paquetes: [
+            ['tracking' => 'ZZZTRK99', 'estatus' => 'Manifiesto Programado', 'peso_real' => 1.0],
+        ]);
+
+        $this->artisan('packages:sync-statuses')->assertSuccessful();
+
+        $this->assertEquals('received_in_warehouse', $package->refresh()->status); // sin cambios: tracking muy corto
+    }
+
+    // -------------------------------------------------------------------------
     // Estados a ignorar explícitamente (decisión de negocio, sin warning)
     // -------------------------------------------------------------------------
 
