@@ -2,6 +2,7 @@
 
 namespace App\Services\DbService;
 
+use App\Enums\PackageStatus;
 use App\Events\InvoiceGenerated;
 use App\Models\AppSetting;
 use App\Models\Invoice;
@@ -12,6 +13,10 @@ use Illuminate\Support\Facades\DB;
 
 class InvoiceService
 {
+    public function __construct(
+        protected PackageService $packageService
+    ) {}
+
     public function generateInvoiceNumber(): string
     {
         $max = Invoice::max('invoice_number');
@@ -110,6 +115,29 @@ class InvoiceService
     public function markAsUnpaid(Invoice $invoice): void
     {
         $invoice->update(['paid_at' => null]);
+    }
+
+    /**
+     * Bulk-transitions every non-delivered package in the invoice to
+     * "delivered". Reuses PackageService::updatePackageStatus so the usual
+     * status-change email fires per package, same as the manual path.
+     */
+    public function markPackagesAsDelivered(Invoice $invoice, ?int $changedBy = null): void
+    {
+        $invoice->loadMissing('packages');
+
+        foreach ($invoice->packages as $package) {
+            if ($package->status === PackageStatus::DELIVERED->value) {
+                continue;
+            }
+
+            $this->packageService->updatePackageStatus(
+                package: $package,
+                newStatus: PackageStatus::DELIVERED->value,
+                changedBy: $changedBy,
+                note: "Entregado junto con la factura {$invoice->invoice_number}.",
+            );
+        }
     }
 
     public function buildPdf(Invoice $invoice): \Barryvdh\DomPDF\PDF

@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\PackageStatus;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -45,6 +47,22 @@ class Invoice extends Model
     public function isPaid(): bool
     {
         return $this->paid_at !== null;
+    }
+
+    public function isFullyDelivered(): bool
+    {
+        return $this->packages->isNotEmpty()
+            && $this->packages->every(fn (Package $package): bool => $package->status === PackageStatus::DELIVERED->value);
+    }
+
+    public function scopeFullyDelivered(Builder $query): Builder
+    {
+        return $query->whereDoesntHave('packages', fn ($q) => $q->where('status', '!=', PackageStatus::DELIVERED->value));
+    }
+
+    public function scopeNotFullyDelivered(Builder $query): Builder
+    {
+        return $query->whereHas('packages', fn ($q) => $q->where('status', '!=', PackageStatus::DELIVERED->value));
     }
 
     public function user(): BelongsTo

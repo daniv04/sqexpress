@@ -14,6 +14,7 @@ use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
 
 class InvoiceResource extends Resource
 {
@@ -127,6 +128,22 @@ class InvoiceResource extends Resource
                         }
                         Notification::make()
                             ->title($record->fresh()->isPaid() ? 'Factura marcada como cancelada' : 'Factura marcada como pendiente')
+                            ->success()
+                            ->send();
+                    }),
+                Tables\Actions\Action::make('marcar_entregados')
+                    ->label('Marcar como entregados')
+                    ->icon('heroicon-o-truck')
+                    ->color('success')
+                    ->visible(fn (Invoice $record): bool => !$record->isFullyDelivered())
+                    ->requiresConfirmation()
+                    ->modalHeading('Marcar paquetes como entregados')
+                    ->modalDescription(fn (Invoice $record): string => 'Se marcarán como entregados los ' . $record->packages->count() . ' paquete(s) de esta factura y se notificará por correo al cliente.')
+                    ->modalSubmitActionLabel('Confirmar')
+                    ->action(function (Invoice $record) {
+                        app(InvoiceService::class)->markPackagesAsDelivered($record, Auth::id());
+                        Notification::make()
+                            ->title('Paquetes marcados como entregados')
                             ->success()
                             ->send();
                     }),

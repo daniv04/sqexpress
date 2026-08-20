@@ -63,6 +63,23 @@ class ViewInvoice extends ViewRecord
                         ->success()
                         ->send();
                 }),
+
+            Actions\Action::make('marcar_entregados')
+                ->label('Marcar como entregados')
+                ->icon('heroicon-o-truck')
+                ->color('success')
+                ->visible(fn (): bool => !$this->record->isFullyDelivered())
+                ->requiresConfirmation()
+                ->modalHeading('Marcar paquetes como entregados')
+                ->modalDescription(fn (): string => 'Se marcarán como entregados los ' . $this->record->packages->count() . ' paquete(s) de esta factura y se notificará por correo al cliente.')
+                ->modalSubmitActionLabel('Confirmar')
+                ->action(function () {
+                    app(InvoiceService::class)->markPackagesAsDelivered($this->record, auth()->id());
+                    Notification::make()
+                        ->title('Paquetes marcados como entregados')
+                        ->success()
+                        ->send();
+                }),
         ];
     }
 
@@ -77,10 +94,15 @@ class ViewInvoice extends ViewRecord
                     Infolists\Components\TextEntry::make('generated_at')
                         ->label('Fecha de emisión')->dateTime('d/m/Y H:i'),
                     Infolists\Components\TextEntry::make('paid_at')
-                        ->label('Estado')
+                        ->label('Estado de pago')
                         ->badge()
                         ->formatStateUsing(fn (?string $state): string => $state !== null ? 'Cancelada' : 'Pendiente')
                         ->color(fn (?string $state): string => $state !== null ? 'success' : 'warning'),
+                    Infolists\Components\TextEntry::make('entrega')
+                        ->label('Estado de entrega')
+                        ->badge()
+                        ->state(fn ($record): string => $record->isFullyDelivered() ? 'Entregado' : 'Pendiente')
+                        ->color(fn ($record): string => $record->isFullyDelivered() ? 'success' : 'warning'),
                     Infolists\Components\TextEntry::make('subtotal')
                         ->label('Subtotal')->prefix('$'),
                     Infolists\Components\TextEntry::make('discount_amount')
