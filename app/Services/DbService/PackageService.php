@@ -46,7 +46,8 @@ class PackageService
         string $newStatus,
         ?int $changedBy = null,
         ?string $note = null,
-        ?string $shelfLocation = null
+        ?string $shelfLocation = null,
+        ?float $weight = null
     ): void
     {
         $fromStatus = PackageStatus::tryFrom($package->status);
@@ -64,11 +65,15 @@ class PackageService
             throw new DomainException('El estante (shelf_location) es obligatorio para el estado received_in_business.');
         }
 
-        DB::transaction(function () use ($package, $fromStatus, $toStatus, $changedBy, $note, $shelfLocation): void {
+        DB::transaction(function () use ($package, $fromStatus, $toStatus, $changedBy, $note, $shelfLocation, $weight): void {
             $updateData = ['status' => $toStatus->value];
 
             if ($toStatus === PackageStatus::RECEIVED_IN_BUSINESS) {
                 $updateData['shelf_location'] = trim((string) $shelfLocation);
+            }
+
+            if ($toStatus->allowsWeightAssignment() && $weight !== null) {
+                $updateData['weight'] = $weight;
             }
 
             $package->update($updateData);
