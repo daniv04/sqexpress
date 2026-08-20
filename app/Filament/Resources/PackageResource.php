@@ -199,6 +199,13 @@ class PackageResource extends Resource
                             )
                             ->maxLength(100),
 
+                        Forms\Components\TextInput::make('weight')
+                            ->label('Peso (kg, opcional)')
+                            ->numeric()
+                            ->minValue(0)
+                            ->visible(fn (Forms\Get $get): bool => $get('new_status') === PackageStatus::RECEIVED_IN_BUSINESS->value
+                            ),
+
                         Forms\Components\Textarea::make('note')
                             ->label('Nota (opcional)')
                             ->rows(2)
@@ -213,6 +220,7 @@ class PackageResource extends Resource
                                 changedBy: Auth::id(),
                                 note: $data['note'] ?? null,
                                 shelfLocation: $data['shelf_location'] ?? null,
+                                weight: isset($data['weight']) && $data['weight'] !== '' ? (float) $data['weight'] : null,
                             );
                             Notification::make()
                                 ->title('Estado actualizado')
