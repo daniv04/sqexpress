@@ -23,6 +23,7 @@ class Invoice extends Model
         'total_crc',
         'points_earned',
         'generated_at',
+        'paid_at',
     ];
 
     protected function casts(): array
@@ -37,7 +38,13 @@ class Invoice extends Model
             'total_crc' => 'decimal:2',
             'points_earned' => 'integer',
             'generated_at' => 'datetime',
+            'paid_at' => 'datetime',
         ];
+    }
+
+    public function isPaid(): bool
+    {
+        return $this->paid_at !== null;
     }
 
     public function user(): BelongsTo

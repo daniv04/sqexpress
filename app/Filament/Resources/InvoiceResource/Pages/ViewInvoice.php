@@ -38,6 +38,31 @@ class ViewInvoice extends ViewRecord
                         ->success()
                         ->send();
                 }),
+
+            Actions\Action::make('toggle_pagada')
+                ->label(fn (): string => $this->record->isPaid() ? 'Marcar pendiente' : 'Marcar cancelada')
+                ->icon(fn (): string => $this->record->isPaid() ? 'heroicon-o-x-circle' : 'heroicon-o-check-circle')
+                ->color(fn (): string => $this->record->isPaid() ? 'gray' : 'success')
+                ->requiresConfirmation()
+                ->modalHeading(fn (): string => $this->record->isPaid()
+                    ? 'Marcar factura como pendiente'
+                    : 'Marcar factura como cancelada')
+                ->modalDescription(fn (): string => $this->record->isPaid()
+                    ? '¿Confirmás que esta factura vuelve a estar pendiente de pago?'
+                    : '¿Confirmás que esta factura ya fue pagada?')
+                ->modalSubmitActionLabel('Confirmar')
+                ->action(function () {
+                    $service = app(InvoiceService::class);
+                    if ($this->record->isPaid()) {
+                        $service->markAsUnpaid($this->record);
+                    } else {
+                        $service->markAsPaid($this->record);
+                    }
+                    Notification::make()
+                        ->title($this->record->fresh()->isPaid() ? 'Factura marcada como cancelada' : 'Factura marcada como pendiente')
+                        ->success()
+                        ->send();
+                }),
         ];
     }
 
@@ -51,6 +76,11 @@ class ViewInvoice extends ViewRecord
                         ->label('N° Factura')->fontFamily('mono')->badge()->color('success'),
                     Infolists\Components\TextEntry::make('generated_at')
                         ->label('Fecha de emisión')->dateTime('d/m/Y H:i'),
+                    Infolists\Components\TextEntry::make('paid_at')
+                        ->label('Estado')
+                        ->badge()
+                        ->formatStateUsing(fn (?string $state): string => $state !== null ? 'Cancelada' : 'Pendiente')
+                        ->color(fn (?string $state): string => $state !== null ? 'success' : 'warning'),
                     Infolists\Components\TextEntry::make('subtotal')
                         ->label('Subtotal')->prefix('$'),
                     Infolists\Components\TextEntry::make('discount_amount')

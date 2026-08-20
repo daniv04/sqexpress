@@ -4,11 +4,14 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\InvoiceResource\Pages;
 use App\Models\Invoice;
+use App\Services\DbService\InvoiceService;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -67,6 +70,12 @@ class InvoiceResource extends Resource
                     ->label('Puntos')->suffix(' pts'),
                 Tables\Columns\TextColumn::make('generated_at')
                     ->label('Fecha')->dateTime('d/m/Y H:i')->sortable(),
+                Tables\Columns\TextColumn::make('paid_at')
+                    ->label('Estado')
+                    ->badge()
+                    ->formatStateUsing(fn (?string $state): string => $state !== null ? 'Cancelada' : 'Pendiente')
+                    ->color(fn (?string $state): string => $state !== null ? 'success' : 'warning')
+                    ->sortable(),
             ])
             ->defaultSort('generated_at', 'desc')
             ->filters([
@@ -79,6 +88,17 @@ class InvoiceResource extends Resource
                     ->query(fn (Builder $q, array $data) => $q
                         ->when($data['from'], fn ($q) => $q->whereDate('generated_at', '>=', $data['from']))
                         ->when($data['until'], fn ($q) => $q->whereDate('generated_at', '<=', $data['until']))),
+
+                TernaryFilter::make('paid_at')
+                    ->label('Estado de pago')
+                    ->placeholder('Todas')
+                    ->trueLabel('Canceladas')
+                    ->falseLabel('Pendientes')
+                    ->queries(
+                        true: fn (Builder $q) => $q->whereNotNull('paid_at'),
+                        false: fn (Builder $q) => $q->whereNull('paid_at'),
+                        blank: fn (Builder $q) => $q,
+                    ),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
@@ -86,6 +106,30 @@ class InvoiceResource extends Resource
                     ->label('Descargar PDF')->icon('heroicon-o-arrow-down-tray')->color('gray')
                     ->url(fn (Invoice $record): string => route('admin.invoices.pdf', $record))
                     ->openUrlInNewTab(),
+                Tables\Actions\Action::make('toggle_pagada')
+                    ->label(fn (Invoice $record): string => $record->isPaid() ? 'Marcar pendiente' : 'Marcar cancelada')
+                    ->icon(fn (Invoice $record): string => $record->isPaid() ? 'heroicon-o-x-circle' : 'heroicon-o-check-circle')
+                    ->color(fn (Invoice $record): string => $record->isPaid() ? 'gray' : 'success')
+                    ->requiresConfirmation()
+                    ->modalHeading(fn (Invoice $record): string => $record->isPaid()
+                        ? 'Marcar factura como pendiente'
+                        : 'Marcar factura como cancelada')
+                    ->modalDescription(fn (Invoice $record): string => $record->isPaid()
+                        ? '¿Confirmás que esta factura vuelve a estar pendiente de pago?'
+                        : '¿Confirmás que esta factura ya fue pagada?')
+                    ->modalSubmitActionLabel('Confirmar')
+                    ->action(function (Invoice $record) {
+                        $service = app(InvoiceService::class);
+                        if ($record->isPaid()) {
+                            $service->markAsUnpaid($record);
+                        } else {
+                            $service->markAsPaid($record);
+                        }
+                        Notification::make()
+                            ->title($record->fresh()->isPaid() ? 'Factura marcada como cancelada' : 'Factura marcada como pendiente')
+                            ->success()
+                            ->send();
+                    }),
             ])
             ->bulkActions([]);
     }

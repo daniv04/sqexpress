@@ -102,6 +102,16 @@ class InvoiceService
         InvoiceGenerated::dispatch($invoice);
     }
 
+    public function markAsPaid(Invoice $invoice): void
+    {
+        $invoice->update(['paid_at' => now()]);
+    }
+
+    public function markAsUnpaid(Invoice $invoice): void
+    {
+        $invoice->update(['paid_at' => null]);
+    }
+
     public function buildPdf(Invoice $invoice): \Barryvdh\DomPDF\PDF
     {
         $invoice->load(['user.provincia', 'user.canton', 'user.distrito', 'user.barrio', 'packages.shippingMethod']);
