@@ -80,15 +80,6 @@ class PackageResource extends Resource
                             ->label('Estante')
                             ->maxLength(100),
 
-                        Forms\Components\Select::make('status')
-                            ->label('Estado')
-                            ->options(collect(PackageStatus::cases())->mapWithKeys(
-                                fn (PackageStatus $s) => [$s->value => $s->label()]
-                            ))
-                            ->required()
-                            ->default(PackageStatus::PREALERTED->value)
-                            ->visibleOn('create'),
-
                         Forms\Components\TextInput::make('status')
                             ->label('Estado')
                             ->disabled()
