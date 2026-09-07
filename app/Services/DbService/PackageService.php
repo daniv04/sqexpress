@@ -65,6 +65,10 @@ class PackageService
             throw new DomainException('El estante (shelf_location) es obligatorio para el estado received_in_business.');
         }
 
+        if ($toStatus === PackageStatus::DELIVERED && ! $package->hasInvoice()) {
+            throw new DomainException('No se puede marcar como entregado un paquete sin factura asociada.');
+        }
+
         DB::transaction(function () use ($package, $fromStatus, $toStatus, $changedBy, $note, $shelfLocation, $weight): void {
             $updateData = ['status' => $toStatus->value];
 
