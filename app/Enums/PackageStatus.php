@@ -31,6 +31,41 @@ enum PackageStatus: string
         };
     }
 
+    public function description(): string
+    {
+        return match ($this) {
+            self::PREALERTED               => 'El cliente registró el paquete, pero todavía no ha llegado a la bodega del país de origen. Es el estado inicial.',
+            self::RECEIVED_IN_WAREHOUSE    => 'El paquete llegó físicamente a la bodega del proveedor en el país de origen.',
+            self::ASSIGNED_FLIGHT          => 'El paquete fue asignado a un vuelo o envío programado hacia Costa Rica.',
+            self::IN_TRANSIT               => 'El paquete está en camino a Costa Rica dentro del vuelo o envío asignado.',
+            self::RECEIVED_IN_CUSTOMS      => 'El paquete llegó a Costa Rica y se encuentra en trámite de desalmacenaje en aduana.',
+            self::CUSTOMS_PROCESS_FINISHED => 'El paquete fue liberado de aduana y puede trasladarse a la oficina.',
+            self::RECEIVED_IN_BUSINESS     => 'El paquete llegó físicamente a la oficina en Costa Rica. Desde aquí se le puede asignar el peso real y ya se puede generar la factura.',
+            self::READY_TO_DELIVER         => 'El paquete fue revisado y está listo para ser entregado o retirado por el cliente. También se le puede generar factura desde aquí.',
+            self::DELIVERED                => 'El paquete fue entregado al cliente. Estado final, no admite más cambios.',
+            self::CANCELED                 => 'El paquete fue cancelado (extravío, rechazo, error de registro, etc.). Estado final, no admite más cambios.',
+        };
+    }
+
+    /**
+     * Filament color name, matching PackageResource::statusColor().
+     */
+    public function color(): string
+    {
+        return match ($this) {
+            self::PREALERTED               => 'gray',
+            self::RECEIVED_IN_WAREHOUSE,
+            self::ASSIGNED_FLIGHT,
+            self::IN_TRANSIT               => 'info',
+            self::RECEIVED_IN_CUSTOMS,
+            self::CUSTOMS_PROCESS_FINISHED,
+            self::RECEIVED_IN_BUSINESS     => 'warning',
+            self::READY_TO_DELIVER,
+            self::DELIVERED                => 'success',
+            self::CANCELED                 => 'danger',
+        };
+    }
+
     public function nextAllowedStatuses(): array
     {
         return match ($this) {
@@ -40,7 +75,7 @@ enum PackageStatus: string
             self::IN_TRANSIT => [self::RECEIVED_IN_CUSTOMS, self::CANCELED],
             self::RECEIVED_IN_CUSTOMS => [self::CUSTOMS_PROCESS_FINISHED, self::CANCELED],
             self::CUSTOMS_PROCESS_FINISHED => [self::RECEIVED_IN_BUSINESS, self::CANCELED],
-            self::RECEIVED_IN_BUSINESS => [self::READY_TO_DELIVER, self::CANCELED],
+            self::RECEIVED_IN_BUSINESS => [self::READY_TO_DELIVER, self::DELIVERED, self::CANCELED],
             self::READY_TO_DELIVER => [self::DELIVERED],
             self::DELIVERED, self::CANCELED => [],
         };
@@ -49,6 +84,18 @@ enum PackageStatus: string
     public function canTransitionTo(self $to): bool
     {
         return in_array($to, $this->nextAllowedStatuses(), true);
+    }
+
+    /**
+     * A package can be invoiced once it has physically arrived at the
+     * business, without needing the manual "ready to deliver" step first.
+     */
+    public function isInvoiceable(): bool
+    {
+        return in_array($this, [
+            self::RECEIVED_IN_BUSINESS,
+            self::READY_TO_DELIVER,
+        ], true);
     }
 
     /**

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Enums\PackageStatus;
 use App\Models\AppSetting;
 use Filament\Actions\Action;
 use Filament\Forms\Components\TextInput;
@@ -56,6 +57,18 @@ class Configuracion extends Page implements HasForms
                 ->label('Guardar')
                 ->submit('save'),
         ];
+    }
+
+    public function getPackageStatuses(): array
+    {
+        return array_map(
+            static fn (PackageStatus $status): array => [
+                'label' => $status->label(),
+                'description' => $status->description(),
+                'color' => $status->color(),
+            ],
+            PackageStatus::cases(),
+        );
     }
 
     public function save(): void

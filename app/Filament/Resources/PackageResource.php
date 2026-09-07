@@ -309,7 +309,7 @@ class PackageResource extends Resource
                     ->label('Crear Factura')
                     ->icon('heroicon-o-document-text')
                     ->color('success')
-                    ->visible(fn (Package $record): bool => $record->status === PackageStatus::READY_TO_DELIVER->value && ! $record->hasInvoice()
+                    ->visible(fn (Package $record): bool => PackageStatus::from($record->status)->isInvoiceable() && ! $record->hasInvoice()
                     )
                     ->url(fn (Package $record): string => InvoiceResource::getUrl('create').'?user_id='.$record->user_id
                     ),

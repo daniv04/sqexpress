@@ -27,7 +27,7 @@ class CreateInvoice extends CreateRecord
                             ->label('Cliente')
                             ->options(User::where('role', '!=', 'admin')
                                 ->whereHas('packages', fn ($query) => $query
-                                    ->where('status', PackageStatus::READY_TO_DELIVER->value)
+                                    ->whereIn('status', [PackageStatus::RECEIVED_IN_BUSINESS->value, PackageStatus::READY_TO_DELIVER->value])
                                     ->whereNull('invoice_id'))
                                 ->orderBy('name')
                                 ->pluck('name', 'id'))
@@ -50,7 +50,7 @@ class CreateInvoice extends CreateRecord
                                 }
 
                                 return Package::where('user_id', $userId)
-                                    ->where('status', PackageStatus::READY_TO_DELIVER->value)
+                                    ->whereIn('status', [PackageStatus::RECEIVED_IN_BUSINESS->value, PackageStatus::READY_TO_DELIVER->value])
                                     ->whereNull('invoice_id')
                                     ->with('shippingMethod')
                                     ->get()
@@ -87,7 +87,7 @@ class CreateInvoice extends CreateRecord
                             })
                             ->visible(fn (Forms\Get $get): bool => (bool) $get('user_id'))
                             ->minItems(1)
-                            ->helperText('Solo se muestran paquetes en estado "Listo para Entregar" sin factura previa.'),
+                            ->helperText('Solo se muestran paquetes en estado "Recibido en Oficina" o "Listo para Entregar" sin factura previa.'),
                     ]),
 
                 Forms\Components\Section::make('Pesos y costos')

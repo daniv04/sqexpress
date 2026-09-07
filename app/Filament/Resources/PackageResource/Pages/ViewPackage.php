@@ -85,7 +85,7 @@ class ViewPackage extends ViewRecord
                 ->label('Crear Factura')
                 ->icon('heroicon-o-document-text')
                 ->color('success')
-                ->visible(fn () => $this->record->status === PackageStatus::READY_TO_DELIVER->value && !$this->record->hasInvoice())
+                ->visible(fn () => PackageStatus::from($this->record->status)->isInvoiceable() && !$this->record->hasInvoice())
                 ->url(fn () => InvoiceResource::getUrl('create') . '?user_id=' . $this->record->user_id),
         ];
     }
