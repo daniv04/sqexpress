@@ -68,7 +68,7 @@
                             </div>
 
                             <div>
-                                <span class="font-medium text-gray-500 dark:text-gray-400">{{ __('Referencia') }}</span>
+                                <span class="font-medium text-gray-500 dark:text-gray-400">{{ __('Dirección 2/ Unidad/ Suite/ Casillero') }}</span>
                                 <p class="mt-1 font-mono font-semibold text-indigo-600 dark:text-indigo-400">{{ $user->locker_code }}</p>
                             </div>
 
