@@ -10,6 +10,7 @@ enum PackageStatus: string
     case IN_TRANSIT = 'in_transit';
     case RECEIVED_IN_CUSTOMS = 'received_in_customs';
     case CUSTOMS_PROCESS_FINISHED = 'customs_process_finished';
+    case PENDING_WAREHOUSE_RECEPTION = 'pending_warehouse_reception';
     case RECEIVED_IN_BUSINESS = 'received_in_business';
     case READY_TO_DELIVER = 'ready_to_deliver';
     case DELIVERED = 'delivered';
@@ -24,6 +25,7 @@ enum PackageStatus: string
             self::IN_TRANSIT            => 'En Tránsito a CR',
             self::RECEIVED_IN_CUSTOMS   => 'Recibido en Aduana',
             self::CUSTOMS_PROCESS_FINISHED => 'Liberado de Aduana',
+            self::PENDING_WAREHOUSE_RECEPTION => 'Pendiente de Recepción en Bodega',
             self::RECEIVED_IN_BUSINESS  => 'Recibido en Oficina',
             self::READY_TO_DELIVER      => 'Listo para Entregar',
             self::DELIVERED             => 'Entregado',
@@ -40,6 +42,7 @@ enum PackageStatus: string
             self::IN_TRANSIT               => 'El paquete está en camino a Costa Rica dentro del vuelo o envío asignado.',
             self::RECEIVED_IN_CUSTOMS      => 'El paquete llegó a Costa Rica y se encuentra en trámite de desalmacenaje en aduana.',
             self::CUSTOMS_PROCESS_FINISHED => 'El paquete fue liberado de aduana y puede trasladarse a la oficina.',
+            self::PENDING_WAREHOUSE_RECEPTION => 'Pasó más de un día desde que se liberó de aduana sin confirmarse su llegada física a la oficina. Es automático: avisa al cliente que el paquete sigue en camino, para que no pregunte por qué "no ha llegado".',
             self::RECEIVED_IN_BUSINESS     => 'El paquete llegó físicamente a la oficina en Costa Rica. Desde aquí se le puede asignar el peso real y ya se puede generar la factura.',
             self::READY_TO_DELIVER         => 'El paquete fue revisado y está listo para ser entregado o retirado por el cliente. También se le puede generar factura desde aquí.',
             self::DELIVERED                => 'El paquete fue entregado al cliente. Estado final, no admite más cambios.',
@@ -59,6 +62,7 @@ enum PackageStatus: string
             self::IN_TRANSIT               => 'info',
             self::RECEIVED_IN_CUSTOMS,
             self::CUSTOMS_PROCESS_FINISHED,
+            self::PENDING_WAREHOUSE_RECEPTION,
             self::RECEIVED_IN_BUSINESS     => 'warning',
             self::READY_TO_DELIVER,
             self::DELIVERED                => 'success',
@@ -74,7 +78,11 @@ enum PackageStatus: string
             self::ASSIGNED_FLIGHT => [self::IN_TRANSIT, self::CANCELED],
             self::IN_TRANSIT => [self::RECEIVED_IN_CUSTOMS, self::CANCELED],
             self::RECEIVED_IN_CUSTOMS => [self::CUSTOMS_PROCESS_FINISHED, self::CANCELED],
-            self::CUSTOMS_PROCESS_FINISHED => [self::RECEIVED_IN_BUSINESS, self::CANCELED],
+            // RECEIVED_IN_BUSINESS listed first so automated/API-driven advances
+            // (which pick the first non-canceled option) always jump straight
+            // there, skipping the pending-reception waypoint entirely.
+            self::CUSTOMS_PROCESS_FINISHED => [self::RECEIVED_IN_BUSINESS, self::PENDING_WAREHOUSE_RECEPTION, self::CANCELED],
+            self::PENDING_WAREHOUSE_RECEPTION => [self::RECEIVED_IN_BUSINESS, self::CANCELED],
             self::RECEIVED_IN_BUSINESS => [self::READY_TO_DELIVER, self::DELIVERED, self::CANCELED],
             self::READY_TO_DELIVER => [self::DELIVERED],
             self::DELIVERED, self::CANCELED => [],
@@ -114,5 +122,17 @@ enum PackageStatus: string
     public static function values(): array
     {
         return array_map(static fn (self $status) => $status->value, self::cases());
+    }
+
+    /**
+     * Value => label map, single source of truth for every UI that needs it
+     * (admin panel, client dashboard, package list/detail, emails).
+     */
+    public static function labels(): array
+    {
+        return array_combine(
+            self::values(),
+            array_map(static fn (self $status) => $status->label(), self::cases()),
+        );
     }
 }

@@ -451,35 +451,11 @@ class PackageResource extends Resource
 
     public static function statusLabel(string $state): string
     {
-        return match ($state) {
-            'prealerted' => 'Prealertado',
-            'received_in_warehouse' => 'Recibido en bodega',
-            'assigned_flight' => 'Programado para envío',
-            'in_transit' => 'En tránsito a CR',
-            'received_in_customs' => 'Recibido en aduana CR',
-            'customs_process_finished' => 'Liberado de aduana',
-            'received_in_business' => 'Recibido en empresa',
-            'ready_to_deliver' => 'Listo para entregar',
-            'delivered' => 'Entregado',
-            'canceled' => 'Cancelado',
-            default => $state,
-        };
+        return PackageStatus::tryFrom($state)?->label() ?? $state;
     }
 
     public static function statusColor(string $state): string
     {
-        return match ($state) {
-            'prealerted' => 'gray',
-            'received_in_warehouse' => 'info',
-            'assigned_flight' => 'info',
-            'in_transit' => 'info',
-            'received_in_customs' => 'warning',
-            'customs_process_finished' => 'warning',
-            'received_in_business' => 'warning',
-            'ready_to_deliver' => 'success',
-            'delivered' => 'success',
-            'canceled' => 'danger',
-            default => 'gray',
-        };
+        return PackageStatus::tryFrom($state)?->color() ?? 'gray';
     }
 }

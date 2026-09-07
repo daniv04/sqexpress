@@ -12,7 +12,7 @@
                 @php
                     $prealerted = $packages->where('status', 'prealerted')->count();
                     $inWarehouse = $packages->whereIn('status', ['received_in_warehouse', 'assigned_flight'])->count();
-                    $inTransit = $packages->whereIn('status', ['received_in_customs', 'customs_process_finished', 'received_in_business'])->count();
+                    $inTransit = $packages->whereIn('status', ['received_in_customs', 'customs_process_finished', 'pending_warehouse_reception', 'received_in_business'])->count();
                     $readyToDeliver = $packages->where('status', 'ready_to_deliver')->count();
                 @endphp
 

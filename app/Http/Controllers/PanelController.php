@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\PackageStatus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -15,18 +16,7 @@ class PanelController extends Controller
         $user = Auth::user();
         $packages = $user->packages()->visibleToClient()->get();
 
-        $statuses = [
-            'prealerted' => 'Prealertado',
-            'received_in_warehouse' => 'Recibido en Bodega',
-            'assigned_flight' => 'Programado para Envío',
-            'in_transit' => 'En Tránsito a CR',
-            'received_in_customs' => 'Recibido en Aduanas',
-            'customs_process_finished' => 'Liberado de Aduana',
-            'received_in_business' => 'Recibido en Negocio',
-            'ready_to_deliver' => 'Listo para Entregar',
-            'delivered' => 'Entregado',
-            'canceled' => 'Cancelado',
-        ];
+        $statuses = PackageStatus::labels();
 
         return view('panel', compact('packages', 'statuses'));
     }

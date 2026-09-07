@@ -11,3 +11,7 @@ Artisan::command('inspire', function () {
 Schedule::command('packages:sync-statuses')
     ->everyFifteenMinutes()
     ->withoutOverlapping();
+
+Schedule::command('packages:flag-pending-warehouse-reception')
+    ->hourly()
+    ->withoutOverlapping();

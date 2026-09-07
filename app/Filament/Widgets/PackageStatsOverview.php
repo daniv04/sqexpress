@@ -46,6 +46,10 @@ class PackageStatsOverview extends BaseWidget
                 ->icon('heroicon-o-clipboard-document-check')
                 ->color('warning'),
 
+            Stat::make('Pendiente de recepción', $counts->get(PackageStatus::PENDING_WAREHOUSE_RECEPTION->value, 0))
+                ->icon('heroicon-o-clock')
+                ->color('warning'),
+
             Stat::make('En empresa', $counts->get(PackageStatus::RECEIVED_IN_BUSINESS->value, 0))
                 ->icon('heroicon-o-home-modern')
                 ->color('warning'),

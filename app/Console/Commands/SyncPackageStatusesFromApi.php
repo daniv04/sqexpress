@@ -37,6 +37,7 @@ class SyncPackageStatusesFromApi extends Command
         PackageStatus::IN_TRANSIT->value,
         PackageStatus::RECEIVED_IN_CUSTOMS->value,
         PackageStatus::CUSTOMS_PROCESS_FINISHED->value,
+        PackageStatus::PENDING_WAREHOUSE_RECEPTION->value,
     ];
 
     public function handle(PackageService $packageService, MlcLogisticsClient $mlc): int
@@ -269,8 +270,9 @@ class SyncPackageStatusesFromApi extends Command
             'in_transit'            => 3,
             'received_in_customs'      => 4,
             'customs_process_finished' => 5,
-            'received_in_business'     => 6,
-            'ready_to_deliver'         => 7,
+            'pending_warehouse_reception' => 6,
+            'received_in_business'     => 7,
+            'ready_to_deliver'         => 8,
             default                 => 99,
         };
     }

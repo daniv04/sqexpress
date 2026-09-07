@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\PackageStatus;
 use App\Models\Package;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -66,18 +67,7 @@ class PackageController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(15);
 
-        $statuses = [
-            'prealerted' => 'Prealertado',
-            'received_in_warehouse' => 'Recibido en Bodega',
-            'assigned_flight' => 'Programado para Envío',
-            'in_transit' => 'En Tránsito a CR',
-            'received_in_customs' => 'Recibido en Aduanas',
-            'customs_process_finished' => 'Liberado de Aduana',
-            'received_in_business' => 'Recibido en Negocio',
-            'ready_to_deliver' => 'Listo para Entregar',
-            'delivered' => 'Entregado',
-            'canceled' => 'Cancelado',
-        ];
+        $statuses = PackageStatus::labels();
 
         $shippingMethods = ShippingMethod::where('active', true)->get();
 
@@ -105,18 +95,7 @@ class PackageController extends Controller
 
         $package->load(['shippingMethod', 'statusHistories.changedBy', 'user']);
 
-        $statuses = [
-            'prealerted' => 'Prealertado',
-            'received_in_warehouse' => 'Recibido en Bodega',
-            'assigned_flight' => 'Programado para Envío',
-            'in_transit' => 'En Tránsito a CR',
-            'received_in_customs' => 'Recibido en Aduanas',
-            'customs_process_finished' => 'Liberado de Aduana',
-            'received_in_business' => 'Recibido en Negocio',
-            'ready_to_deliver' => 'Listo para Entregar',
-            'delivered' => 'Entregado',
-            'canceled' => 'Cancelado',
-        ];
+        $statuses = PackageStatus::labels();
 
         $shippingMethods = ShippingMethod::where('active', true)->get();
 
