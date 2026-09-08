@@ -25,7 +25,7 @@ enum PackageStatus: string
             self::IN_TRANSIT            => 'En Tránsito a CR',
             self::RECEIVED_IN_CUSTOMS   => 'Recibido en Aduana',
             self::CUSTOMS_PROCESS_FINISHED => 'Liberado de Aduana',
-            self::PENDING_WAREHOUSE_RECEPTION => 'Pendiente de Recepción en Bodega',
+            self::PENDING_WAREHOUSE_RECEPTION => 'Pendiente de Ingreso a SQEXPRESS',
             self::RECEIVED_IN_BUSINESS  => 'Recibido en Oficina',
             self::READY_TO_DELIVER      => 'Listo para Entregar',
             self::DELIVERED             => 'Entregado',
