@@ -17,6 +17,9 @@ class InvoiceService
         protected PackageService $packageService
     ) {}
 
+    /** 10 loyalty points = ₡10 CRC discount. */
+    private const POINTS_TO_CRC_RATE = 1.0;
+
     public function generateInvoiceNumber(): string
     {
         $max = Invoice::max('invoice_number');
@@ -46,6 +49,11 @@ class InvoiceService
         return (int) round($totalAfterDiscount);
     }
 
+    public function pointsDiscountInCrc(int $points): float
+    {
+        return round($points * self::POINTS_TO_CRC_RATE, 2);
+    }
+
     /**
      * Generate an invoice for multiple packages from the same user.
      *
@@ -56,18 +64,22 @@ class InvoiceService
         Collection $packages,
         float $deliveryFee,
         int $adminId,
-        bool $applyNewClientDiscount = true
+        bool $applyNewClientDiscount = true,
+        bool $redeemPoints = false
     ): Invoice {
-        $invoice = DB::transaction(function () use ($user, $packages, $deliveryFee, $adminId, $applyNewClientDiscount): Invoice {
+        $invoice = DB::transaction(function () use ($user, $packages, $deliveryFee, $adminId, $applyNewClientDiscount, $redeemPoints): Invoice {
             $subtotal = $packages->sum('service_cost');
             $isFirst = $applyNewClientDiscount && $this->isFirstInvoice($user);
             $discount = $this->calculateDiscount($subtotal, $isFirst);
             $total = $subtotal - $discount;
             $points = $this->calculatePoints($total);
 
+            $pointsToRedeem = $redeemPoints ? $user->loyalty_points : 0;
+            $pointsDiscountCrc = $pointsToRedeem > 0 ? $this->pointsDiscountInCrc($pointsToRedeem) : 0.0;
+
             $rate = (float) AppSetting::get('exchange_rate_usd_crc', 0);
-            $totalCrc = ($rate > 0 || $deliveryFee > 0)
-                ? round(($rate > 0 ? $total * $rate : 0) + $deliveryFee, 2)
+            $totalCrc = ($rate > 0 || $deliveryFee > 0 || $pointsDiscountCrc > 0)
+                ? max(0, round(($rate > 0 ? $total * $rate : 0) + $deliveryFee - $pointsDiscountCrc, 2))
                 : null;
 
             $invoiceNumber = $this->generateInvoiceNumber();
@@ -84,6 +96,8 @@ class InvoiceService
                 'exchange_rate' => $rate > 0 ? $rate : null,
                 'total_crc' => $totalCrc,
                 'points_earned' => $points,
+                'points_redeemed' => $pointsToRedeem,
+                'points_discount_crc' => $pointsDiscountCrc,
                 'generated_at' => now(),
             ]);
 
@@ -92,7 +106,10 @@ class InvoiceService
                 $package->update(['invoice_id' => $invoice->id]);
             }
 
-            $user->increment('loyalty_points', $points);
+            $user->update([
+                'loyalty_points' => $user->loyalty_points - $pointsToRedeem + $points,
+                'redeem_points_requested' => false,
+            ]);
 
             return $invoice;
         });

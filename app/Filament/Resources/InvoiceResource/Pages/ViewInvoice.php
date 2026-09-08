@@ -113,6 +113,12 @@ class ViewInvoice extends ViewRecord
                         ->label('Cargo por entrega')->prefix('₡')
                         ->color('warning')
                         ->visible(fn ($record): bool => (float) $record->delivery_fee > 0),
+                    Infolists\Components\TextEntry::make('points_discount_crc')
+                        ->label('Descuento por puntos canjeados')
+                        ->prefix('- ₡')
+                        ->suffix(fn ($record): string => " ({$record->points_redeemed} pts)")
+                        ->color('success')
+                        ->visible(fn ($record): bool => (float) $record->points_discount_crc > 0),
                     Infolists\Components\TextEntry::make('total')
                         ->label('Total')
                         ->prefix('$')

@@ -24,6 +24,8 @@ class Invoice extends Model
         'exchange_rate',
         'total_crc',
         'points_earned',
+        'points_redeemed',
+        'points_discount_crc',
         'generated_at',
         'paid_at',
     ];
@@ -39,6 +41,8 @@ class Invoice extends Model
             'exchange_rate' => 'decimal:2',
             'total_crc' => 'decimal:2',
             'points_earned' => 'integer',
+            'points_redeemed' => 'integer',
+            'points_discount_crc' => 'decimal:2',
             'generated_at' => 'datetime',
             'paid_at' => 'datetime',
         ];

@@ -38,6 +38,7 @@ class User extends Authenticatable implements FilamentUser
         'locker_code',
         'active',
         'loyalty_points',
+        'redeem_points_requested',
     ];
 
     /**
@@ -61,6 +62,7 @@ class User extends Authenticatable implements FilamentUser
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'active' => 'boolean',
+            'redeem_points_requested' => 'boolean',
         ];
     }
 
@@ -102,6 +104,11 @@ class User extends Authenticatable implements FilamentUser
     public function getTotalPointsAttribute(): int
     {
         return (int) ($this->loyalty_points ?? 0);
+    }
+
+    public function hasRedeemablePoints(): bool
+    {
+        return $this->loyalty_points > 0;
     }
 
     public function invoices(): HasMany

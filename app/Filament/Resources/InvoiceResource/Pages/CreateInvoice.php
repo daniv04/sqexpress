@@ -34,7 +34,10 @@ class CreateInvoice extends CreateRecord
                             ->searchable()
                             ->required()
                             ->live()
-                            ->afterStateUpdated(fn (Forms\Set $set) => $set('package_ids', []))
+                            ->afterStateUpdated(function (Forms\Set $set, ?string $state) {
+                                $set('package_ids', []);
+                                $set('redeem_points', $state ? (bool) User::find($state)?->redeem_points_requested : false);
+                            })
                             ->default(request('user_id')),
                     ]),
 
@@ -150,6 +153,28 @@ class CreateInvoice extends CreateRecord
                                     && app(InvoiceService::class)->isFirstInvoice(User::find($userId));
                             }),
 
+                        Forms\Components\Toggle::make('redeem_points')
+                            ->label('Canjear puntos de fidelidad del cliente')
+                            ->live()
+                            ->visible(function (Forms\Get $get): bool {
+                                $userId = $get('user_id');
+                                $user = $userId ? User::find($userId) : null;
+
+                                return (bool) $user?->hasRedeemablePoints();
+                            })
+                            ->helperText(function (Forms\Get $get): ?string {
+                                $userId = $get('user_id');
+                                $user = $userId ? User::find($userId) : null;
+                                if (! $user) {
+                                    return null;
+                                }
+
+                                $discount = app(InvoiceService::class)->pointsDiscountInCrc($user->loyalty_points);
+                                $requested = $user->redeem_points_requested ? ' El cliente solicitó canjearlos.' : '';
+
+                                return "El cliente tiene {$user->loyalty_points} puntos (₡".number_format($discount, 2).' de descuento).'.$requested;
+                            }),
+
                         Forms\Components\Toggle::make('has_delivery_fee')
                             ->label('Cobrar por entrega a domicilio')
                             ->live(),
@@ -220,6 +245,21 @@ class CreateInvoice extends CreateRecord
                             })
                             ->live(),
 
+                        Forms\Components\Placeholder::make('points_discount_preview')
+                            ->label('Descuento por puntos')
+                            ->content(function (Forms\Get $get): string {
+                                $userId = $get('user_id');
+                                if (! $userId || ! $get('redeem_points')) {
+                                    return '—';
+                                }
+
+                                $user = User::find($userId);
+                                $discount = app(InvoiceService::class)->pointsDiscountInCrc($user->loyalty_points ?? 0);
+
+                                return '-₡'.number_format($discount, 2).' ('.($user->loyalty_points ?? 0).' pts)';
+                            })
+                            ->live(),
+
                         Forms\Components\Placeholder::make('total_preview')
                             ->label('Total')
                             ->content(function (Forms\Get $get): string {
@@ -244,8 +284,9 @@ class CreateInvoice extends CreateRecord
                                 $totalPreview = '$'.number_format($total, 2);
 
                                 $rate = (float) AppSetting::get('exchange_rate_usd_crc', 0);
-                                if ($rate > 0 || $deliveryFee > 0) {
-                                    $totalCrc = round(($rate > 0 ? $total * $rate : 0) + $deliveryFee, 2);
+                                $pointsDiscountCrc = $get('redeem_points') ? app(InvoiceService::class)->pointsDiscountInCrc($user->loyalty_points ?? 0) : 0.0;
+                                if ($rate > 0 || $deliveryFee > 0 || $pointsDiscountCrc > 0) {
+                                    $totalCrc = max(0, round(($rate > 0 ? $total * $rate : 0) + $deliveryFee - $pointsDiscountCrc, 2));
                                     $totalPreview .= ' · ₡'.number_format($totalCrc, 2);
                                 }
 
@@ -300,6 +341,7 @@ class CreateInvoice extends CreateRecord
             deliveryFee: $deliveryFee,
             adminId: auth()->id(),
             applyNewClientDiscount: (bool) ($data['apply_new_client_discount'] ?? true),
+            redeemPoints: (bool) ($data['redeem_points'] ?? false),
         );
     }
 

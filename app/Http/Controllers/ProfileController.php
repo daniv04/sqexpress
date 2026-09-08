@@ -46,6 +46,20 @@ class ProfileController extends Controller
     }
 
     /**
+     * Toggle whether the user wants their loyalty points redeemed on their next invoice.
+     */
+    public function toggleRedeemPoints(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+
+        $user->update([
+            'redeem_points_requested' => ! $user->redeem_points_requested,
+        ]);
+
+        return Redirect::route('profile.edit')->with('status', 'redeem-points-updated');
+    }
+
+    /**
      * Delete the user's account.
      */
     public function destroy(Request $request): RedirectResponse

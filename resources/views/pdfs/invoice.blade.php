@@ -148,6 +148,12 @@
             <td>₡{{ number_format($invoice->delivery_fee, 2) }}</td>
         </tr>
         @endif
+        @if($invoice->points_discount_crc > 0)
+        <tr>
+            <td style="color: #15803d;">Descuento por puntos canjeados ({{ $invoice->points_redeemed }} pts):</td>
+            <td style="color: #15803d;">- ₡{{ number_format($invoice->points_discount_crc, 2) }}</td>
+        </tr>
+        @endif
         <tr class="total">
             <td>Total:</td>
             <td>${{ number_format($invoice->total, 2) }}</td>
@@ -171,6 +177,9 @@
         * Los puntos otorgados son 1 por cada $1 del total a pagar ({{ $invoice->points_earned }} puntos).<br>
         @if($invoice->discount_amount > 0)
         * Descuento del 10% aplicado por ser tu primera factura con SQ EXPRESS CR.<br>
+        @endif
+        @if($invoice->points_discount_crc > 0)
+        * Se canjearon {{ $invoice->points_redeemed }} puntos de fidelidad por ₡{{ number_format($invoice->points_discount_crc, 2) }} de descuento.<br>
         @endif
         Este documento es una factura generada automáticamente. Para consultas escriba a info@sqexpresscr.com.
     </div>
