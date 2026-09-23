@@ -174,7 +174,7 @@
 
     {{-- FOOTER --}}
     <div class="footer-note">
-        * Los puntos otorgados son 1 por cada $1 del total a pagar ({{ $invoice->points_earned }} puntos).<br>
+        * Los puntos otorgados equivalen al 1% del total a pagar en colones ({{ $invoice->points_earned }} puntos).<br>
         @if($invoice->discount_amount > 0)
         * Descuento del 10% aplicado por ser tu primera factura con SQ EXPRESS CR.<br>
         @endif

@@ -14,8 +14,8 @@
             <span class="mt-1 text-sm text-blue-600 dark:text-blue-400 font-medium">puntos acumulados</span>
         </div>
         <div class="text-sm text-gray-600 dark:text-gray-400 max-w-xs">
-            <p>Ganas <strong>1 punto por cada $1</strong> del costo de servicio de tus envíos facturados.</p>
-            <p class="mt-2">Cada <strong>10 puntos equivalen a ₡10</strong> de descuento en colones.</p>
+            <p>Ganas el <strong>1% del total</strong> de cada factura en puntos (₡100 = 1 punto).</p>
+            <p class="mt-2">Cada <strong>punto equivale a ₡1</strong> de descuento en colones.</p>
         </div>
     </div>
 
@@ -24,7 +24,7 @@
             @if ($user->redeem_points_requested)
                 <div class="flex items-center gap-3 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800 px-4 py-3">
                     <p class="text-sm text-green-700 dark:text-green-300">
-                        {{ __('Tus :points puntos se canjearán (₡:discount de descuento) en tu próxima factura.', ['points' => $user->loyalty_points, 'discount' => number_format($user->loyalty_points, 2)]) }}
+                        {{ __('Tus :points puntos se canjearán (₡:discount de descuento) en tu próxima factura.', ['points' => $user->loyalty_points, 'discount' => number_format(app(\App\Services\DbService\InvoiceService::class)->pointsDiscountInCrc($user->loyalty_points), 2)]) }}
                     </p>
                     <form method="POST" action="{{ route('profile.redeem-points') }}">
                         @csrf

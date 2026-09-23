@@ -17,7 +17,14 @@ class InvoiceService
         protected PackageService $packageService
     ) {}
 
-    /** 10 loyalty points = ₡10 CRC discount. */
+    /**
+     * Loyalty points earned: 1% of the invoice total in colones (₡100 → 1 point).
+     */
+    private const POINTS_EARN_RATE = 0.01;
+
+    /**
+     * Redemption value of one loyalty point: 1 point = ₡1 discount.
+     */
     private const POINTS_TO_CRC_RATE = 1.0;
 
     public function generateInvoiceNumber(): string
@@ -43,10 +50,13 @@ class InvoiceService
         return $applyDiscount ? round($serviceCost * 0.10, 2) : 0.0;
     }
 
-    public function calculatePoints(float $totalAfterDiscount): int
+    /**
+     * Points earned for an invoice, based on its final total in colones.
+     * Fractions are truncated: ₡150 earns 1 point, ₡199 earns 1 point.
+     */
+    public function calculatePoints(?float $totalCrc): int
     {
-        // 1 loyalty point per USD dollar of the discounted total
-        return (int) round($totalAfterDiscount);
+        return (int) floor(($totalCrc ?? 0) * self::POINTS_EARN_RATE);
     }
 
     public function pointsDiscountInCrc(int $points): float
@@ -72,7 +82,6 @@ class InvoiceService
             $isFirst = $applyNewClientDiscount && $this->isFirstInvoice($user);
             $discount = $this->calculateDiscount($subtotal, $isFirst);
             $total = $subtotal - $discount;
-            $points = $this->calculatePoints($total);
 
             $pointsToRedeem = $redeemPoints ? $user->loyalty_points : 0;
             $pointsDiscountCrc = $pointsToRedeem > 0 ? $this->pointsDiscountInCrc($pointsToRedeem) : 0.0;
@@ -81,6 +90,8 @@ class InvoiceService
             $totalCrc = ($rate > 0 || $deliveryFee > 0 || $pointsDiscountCrc > 0)
                 ? max(0, round(($rate > 0 ? $total * $rate : 0) + $deliveryFee - $pointsDiscountCrc, 2))
                 : null;
+
+            $points = $this->calculatePoints($totalCrc);
 
             $invoiceNumber = $this->generateInvoiceNumber();
 
