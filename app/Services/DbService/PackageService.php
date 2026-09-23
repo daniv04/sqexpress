@@ -94,6 +94,50 @@ class PackageService
         PackageStatusChanged::dispatch($package, $fromStatus->value, $toStatus->value);
     }
 
+    /**
+     * For packages the client never prealerted that show up at the office:
+     * jumps straight from prealerted to received_in_business, skipping the
+     * origin/transit/customs chain that never got tracked.
+     */
+    public function receiveUnannouncedPackage(
+        Package $package,
+        string $shelfLocation,
+        ?float $weight = null,
+        ?int $changedBy = null
+    ): void
+    {
+        if ($package->status !== PackageStatus::PREALERTED->value) {
+            throw new DomainException('Solo un paquete prealertado puede ingresarse directamente en oficina.');
+        }
+
+        if (blank($shelfLocation)) {
+            throw new DomainException('El estante (shelf_location) es obligatorio para el estado received_in_business.');
+        }
+
+        DB::transaction(function () use ($package, $shelfLocation, $weight, $changedBy): void {
+            $updateData = [
+                'status' => PackageStatus::RECEIVED_IN_BUSINESS->value,
+                'shelf_location' => trim($shelfLocation),
+            ];
+
+            if ($weight !== null) {
+                $updateData['weight'] = $weight;
+            }
+
+            $package->update($updateData);
+
+            PackageStatusHistory::create([
+                'package_id' => $package->id,
+                'from_status' => PackageStatus::PREALERTED->value,
+                'to_status' => PackageStatus::RECEIVED_IN_BUSINESS->value,
+                'changed_by' => $changedBy,
+                'note' => 'Paquete no prealertado por el cliente: ingresado directamente en oficina.',
+            ]);
+        });
+
+        PackageStatusChanged::dispatch($package, PackageStatus::PREALERTED->value, PackageStatus::RECEIVED_IN_BUSINESS->value);
+    }
+
     public function adminUpdatePackage(Package $package, array $data, ?int $changedBy = null): Package
     {
         $whitelist = ['tracking', 'description', 'weight', 'approx_value', 'shelf_location', 'shipping_method_id'];

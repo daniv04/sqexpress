@@ -64,12 +64,21 @@ class PackageResource extends Resource
                             ->maxLength(500)
                             ->columnSpanFull(),
 
+                        Forms\Components\Toggle::make('arrived_at_office')
+                            ->label('El paquete ya está en la oficina (el cliente no lo prealertó)')
+                            ->helperText('Se crea directamente en "Recibido en Oficina", sin pasar por los estados intermedios.')
+                            ->live()
+                            ->dehydrated(false)
+                            ->visibleOn('create')
+                            ->columnSpanFull(),
+
                         Forms\Components\TextInput::make('weight')
                             ->label(fn (Forms\Get $get): string => self::weightFieldLabel($get('shipping_method_id')))
                             ->numeric()
                             ->minValue(0)
-                            ->visible(fn (?Package $record): bool => $record !== null
-                                && PackageStatus::from($record->status)->allowsWeightAssignment()),
+                            ->visible(fn (?Package $record, Forms\Get $get): bool => $record === null
+                                ? (bool) $get('arrived_at_office')
+                                : PackageStatus::from($record->status)->allowsWeightAssignment()),
 
                         Forms\Components\TextInput::make('approx_value')
                             ->label('Valor aprox. (USD)')
@@ -78,6 +87,7 @@ class PackageResource extends Resource
 
                         Forms\Components\TextInput::make('shelf_location')
                             ->label('Estante')
+                            ->required(fn (?Package $record, Forms\Get $get): bool => $record === null && (bool) $get('arrived_at_office'))
                             ->maxLength(100),
 
                         Forms\Components\TextInput::make('status')
