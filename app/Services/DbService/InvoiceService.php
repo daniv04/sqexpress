@@ -6,6 +6,7 @@ use App\Enums\PackageStatus;
 use App\Events\InvoiceGenerated;
 use App\Models\AppSetting;
 use App\Models\Invoice;
+use App\Models\Package;
 use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Collection;
@@ -26,6 +27,14 @@ class InvoiceService
      * Redemption value of one loyalty point: 1 point = ₡1 discount.
      */
     private const POINTS_TO_CRC_RATE = 1.0;
+
+    /**
+     * Package statuses that can be billed.
+     */
+    public const INVOICEABLE_STATUSES = [
+        PackageStatus::RECEIVED_IN_BUSINESS->value,
+        PackageStatus::READY_TO_DELIVER->value,
+    ];
 
     public function generateInvoiceNumber(): string
     {
@@ -87,9 +96,7 @@ class InvoiceService
             $pointsDiscountCrc = $pointsToRedeem > 0 ? $this->pointsDiscountInCrc($pointsToRedeem) : 0.0;
 
             $rate = (float) AppSetting::get('exchange_rate_usd_crc', 0);
-            $totalCrc = ($rate > 0 || $deliveryFee > 0 || $pointsDiscountCrc > 0)
-                ? max(0, round(($rate > 0 ? $total * $rate : 0) + $deliveryFee - $pointsDiscountCrc, 2))
-                : null;
+            $totalCrc = $this->calculateTotalCrc($total, $rate, $deliveryFee, $pointsDiscountCrc);
 
             $points = $this->calculatePoints($totalCrc);
 
@@ -121,6 +128,81 @@ class InvoiceService
                 'loyalty_points' => $user->loyalty_points - $pointsToRedeem + $points,
                 'redeem_points_requested' => false,
             ]);
+
+            return $invoice;
+        });
+
+        InvoiceGenerated::dispatch($invoice);
+
+        return $invoice;
+    }
+
+    /**
+     * Totals an existing invoice would have with the given subtotal. Keeps the
+     * original exchange rate, delivery fee, new-client discount decision and
+     * redeemed points, so adding packages never re-prices what was issued.
+     *
+     * @return array{subtotal: float, discount_amount: float, total: float, total_crc: ?float, points_earned: int}
+     */
+    public function recalculatedTotals(Invoice $invoice, float $subtotal): array
+    {
+        $discount = $this->calculateDiscount($subtotal, (float) $invoice->discount_amount > 0);
+        $total = $subtotal - $discount;
+        $totalCrc = $this->calculateTotalCrc(
+            $total,
+            (float) ($invoice->exchange_rate ?? 0),
+            (float) $invoice->delivery_fee,
+            (float) $invoice->points_discount_crc,
+        );
+
+        return [
+            'subtotal' => $subtotal,
+            'discount_amount' => $discount,
+            'total' => $total,
+            'total_crc' => $totalCrc,
+            'points_earned' => $this->calculatePoints($totalCrc),
+        ];
+    }
+
+    /**
+     * Attach more packages to an unpaid, not fully delivered invoice and
+     * recalculate its totals. Only the points-earned delta is credited to
+     * the client, since the original points were credited at issue time.
+     */
+    public function addPackagesToInvoice(Invoice $invoice, Collection $packageIds): Invoice
+    {
+        $invoice = DB::transaction(function () use ($invoice, $packageIds): Invoice {
+            $invoice = Invoice::with('packages')->lockForUpdate()->findOrFail($invoice->id);
+
+            if (! $invoice->canAddPackages()) {
+                throw new \RuntimeException('La factura ya está cancelada o entregada.');
+            }
+
+            $packageIds = $packageIds->filter()->unique();
+            $newPackages = Package::whereIn('id', $packageIds)
+                ->where('user_id', $invoice->user_id)
+                ->whereIn('status', self::INVOICEABLE_STATUSES)
+                ->whereNull('invoice_id')
+                ->lockForUpdate()
+                ->get();
+
+            if ($newPackages->isEmpty() || $newPackages->count() !== $packageIds->count()) {
+                throw new \RuntimeException('Algunos paquetes ya no están disponibles para facturar.');
+            }
+
+            foreach ($newPackages as $package) {
+                $package->update(['invoice_id' => $invoice->id]);
+            }
+
+            $subtotal = (float) $invoice->packages->sum('service_cost') + (float) $newPackages->sum('service_cost');
+            $totals = $this->recalculatedTotals($invoice, $subtotal);
+            $pointsDelta = $totals['points_earned'] - $invoice->points_earned;
+
+            $invoice->update($totals);
+
+            if ($pointsDelta !== 0) {
+                $invoice->user()->increment('loyalty_points', $pointsDelta);
+            }
 
             return $invoice;
         });
@@ -173,6 +255,13 @@ class InvoiceService
         $invoice->load(['user.provincia', 'user.canton', 'user.distrito', 'user.barrio', 'packages.shippingMethod']);
 
         return Pdf::loadView('pdfs.invoice', compact('invoice'))->setPaper('letter', 'portrait');
+    }
+
+    private function calculateTotalCrc(float $total, float $rate, float $deliveryFee, float $pointsDiscountCrc): ?float
+    {
+        return ($rate > 0 || $deliveryFee > 0 || $pointsDiscountCrc > 0)
+            ? max(0, round(($rate > 0 ? $total * $rate : 0) + $deliveryFee - $pointsDiscountCrc, 2))
+            : null;
     }
 
     private function formatInvoiceNumber(int $number): string

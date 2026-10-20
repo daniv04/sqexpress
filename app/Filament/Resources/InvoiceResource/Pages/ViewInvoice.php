@@ -3,14 +3,17 @@
 namespace App\Filament\Resources\InvoiceResource\Pages;
 
 use App\Filament\Resources\InvoiceResource;
+use App\Models\Package;
 use App\Services\DbService\InvoiceService;
 use Filament\Actions;
+use Filament\Forms;
 use Filament\Infolists;
 use Filament\Infolists\Components\TextEntry\TextEntrySize;
 use Filament\Infolists\Infolist;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Support\Enums\FontWeight;
+use Illuminate\Database\Eloquent\Builder;
 
 class ViewInvoice extends ViewRecord
 {
@@ -64,6 +67,131 @@ class ViewInvoice extends ViewRecord
                         ->send();
                 }),
 
+            Actions\Action::make('agregar_paquetes')
+                ->label('Agregar paquetes')
+                ->icon('heroicon-o-plus-circle')
+                ->color('primary')
+                ->visible(fn (): bool => $this->record->canAddPackages())
+                ->modalHeading('Agregar paquetes a la factura')
+                ->modalDescription('La factura se recalculará con el mismo tipo de cambio y se reenviará al cliente por correo.')
+                ->modalSubmitActionLabel('Agregar y reenviar')
+                ->form([
+                    Forms\Components\CheckboxList::make('package_ids')
+                        ->label('Selecciona los paquetes')
+                        ->required()
+                        ->minItems(1)
+                        ->options(fn (): array => $this->availablePackagesQuery()
+                            ->with('shippingMethod')
+                            ->get()
+                            ->mapWithKeys(function (Package $p): array {
+                                $weight = $p->weight ?? 'SIN PESO';
+                                $unit = $p->shippingMethod?->unitSuffix() ?? 'kg';
+                                $cost = $p->service_cost ?? 0;
+
+                                return [
+                                    $p->id => "#{$p->tracking} — {$p->description} ({$weight} {$unit}) — \$".number_format($cost, 2),
+                                ];
+                            })
+                            ->toArray())
+                        ->live()
+                        ->afterStateUpdated(function (Forms\Set $set, $state) {
+                            $packages = Package::whereIn('id', $state ?? [])->with('shippingMethod')->get();
+
+                            $set('package_weights', $packages->map(function (Package $p): array {
+                                $price = (float) ($p->shippingMethod->price_per_unit ?? 0);
+
+                                return [
+                                    'id' => $p->id,
+                                    'tracking' => $p->tracking,
+                                    'weight' => $p->weight,
+                                    'service_cost' => ($p->weight && $price > 0) ? round($p->weight * $price, 2) : null,
+                                    'unit_suffix' => $p->shippingMethod?->unitSuffix() ?? 'kg',
+                                ];
+                            })->values()->all());
+                        })
+                        ->helperText('Solo se muestran paquetes del cliente en estado "Recibido en Oficina" o "Listo para Entregar" sin factura.'),
+
+                    Forms\Components\Repeater::make('package_weights')
+                        ->label('Ajusta el peso de cada paquete')
+                        ->visible(fn (Forms\Get $get): bool => ! empty($get('package_ids')))
+                        ->addable(false)
+                        ->deletable(false)
+                        ->reorderable(false)
+                        ->schema([
+                            Forms\Components\Hidden::make('id'),
+
+                            Forms\Components\Hidden::make('unit_suffix'),
+
+                            Forms\Components\TextInput::make('tracking')
+                                ->label('Tracking')
+                                ->disabled()
+                                ->dehydrated(false),
+
+                            Forms\Components\TextInput::make('weight')
+                                ->label('Cantidad')
+                                ->suffix(fn (Forms\Get $get) => $get('unit_suffix') ?? 'kg')
+                                ->numeric()
+                                ->minValue(0.01)
+                                ->required()
+                                ->live(onBlur: true)
+                                ->afterStateUpdated(function (Forms\Set $set, Forms\Get $get, $state) {
+                                    $package = Package::with('shippingMethod')->find($get('id'));
+                                    $price = (float) ($package?->shippingMethod->price_per_unit ?? 0);
+                                    $set('service_cost', ($state && $price > 0) ? round($state * $price, 2) : 0);
+                                }),
+
+                            Forms\Components\TextInput::make('service_cost')
+                                ->label('Costo (USD)')
+                                ->numeric()
+                                ->readOnly(),
+                        ])
+                        ->columns(3),
+
+                    Forms\Components\Placeholder::make('totals_preview')
+                        ->label('Resumen')
+                        ->visible(fn (Forms\Get $get): bool => ! empty($get('package_ids')))
+                        ->content(function (Forms\Get $get): string {
+                            $invoice = $this->record;
+                            $added = collect($get('package_weights') ?? [])->sum(fn ($item) => (float) ($item['service_cost'] ?? 0));
+                            $new = app(InvoiceService::class)->recalculatedTotals($invoice, (float) $invoice->subtotal + $added);
+
+                            $line = 'Total: $'.number_format((float) $invoice->total, 2).' → $'.number_format($new['total'], 2);
+                            if ($new['total_crc'] !== null) {
+                                $line .= ' · ₡'.number_format((float) $invoice->total_crc, 2).' → ₡'.number_format($new['total_crc'], 2);
+                            }
+
+                            return $line.' · Puntos: '.$invoice->points_earned.' → '.$new['points_earned'];
+                        }),
+                ])
+                ->action(function (array $data) {
+                    foreach ($data['package_weights'] ?? [] as $item) {
+                        $weight = (float) ($item['weight'] ?? 0);
+                        if (! ($item['id'] ?? null) || $weight <= 0) {
+                            continue;
+                        }
+
+                        Package::where('id', $item['id'])->update([
+                            'weight' => $weight,
+                            'service_cost' => (float) ($item['service_cost'] ?? 0),
+                        ]);
+                    }
+
+                    try {
+                        app(InvoiceService::class)->addPackagesToInvoice($this->record, collect($data['package_ids'] ?? []));
+                    } catch (\RuntimeException $e) {
+                        Notification::make()->title($e->getMessage())->danger()->send();
+
+                        return;
+                    }
+
+                    $this->record->refresh()->load('packages');
+
+                    Notification::make()
+                        ->title('Paquetes agregados y factura reenviada')
+                        ->success()
+                        ->send();
+                }),
+
             Actions\Action::make('marcar_entregados')
                 ->label('Marcar como entregados')
                 ->icon('heroicon-o-truck')
@@ -81,6 +209,13 @@ class ViewInvoice extends ViewRecord
                         ->send();
                 }),
         ];
+    }
+
+    private function availablePackagesQuery(): Builder
+    {
+        return Package::where('user_id', $this->record->user_id)
+            ->whereIn('status', InvoiceService::INVOICEABLE_STATUSES)
+            ->whereNull('invoice_id');
     }
 
     public function infolist(Infolist $infolist): Infolist

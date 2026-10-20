@@ -59,6 +59,11 @@ class Invoice extends Model
             && $this->packages->every(fn (Package $package): bool => $package->status === PackageStatus::DELIVERED->value);
     }
 
+    public function canAddPackages(): bool
+    {
+        return ! $this->isPaid() && ! $this->isFullyDelivered();
+    }
+
     public function scopeFullyDelivered(Builder $query): Builder
     {
         return $query->whereDoesntHave('packages', fn ($q) => $q->where('status', '!=', PackageStatus::DELIVERED->value));
