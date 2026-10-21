@@ -9,7 +9,7 @@ class LockerCodeService
 {
     /**
      * Generate the next sequential locker code.
-     * Format: SQE01, SQE02, ..., SQE09, SQE10, SQE11, ..., SQE100, etc.
+     * Format: SQECR01, SQECR02, ..., SQECR09, SQECR10, ..., SQECR100, etc.
      * Ensures the generated code doesn't already exist in the database.
      *
      * @return string
@@ -21,7 +21,7 @@ class LockerCodeService
             ->orderBy('id', 'desc')
             ->first();
 
-        // If no locker code exists, start with SQE01
+        // If no locker code exists, start with SQECR01
         if (!$lastUser) {
             $nextNumber = 1;
         } else {
@@ -41,29 +41,28 @@ class LockerCodeService
 
     /**
      * Extract the numeric part from a locker code.
-     * Handles both old format "SQE-XXXX" and new format "SQEXX"
-     * Example: "SQE00005" -> 5, "SQE05" -> 5, "SQE-1234" -> 1234
-     * 
+     * Handles legacy formats "SQE-XXXX" and "SQEXX" and current format "SQECRXX"
+     * Example: "SQECR05" -> 5, "SQE05" -> 5, "SQE-1234" -> 1234
+     *
      * @param string $code
      * @return int
      */
     private function extractNumberFromCode(string $code): int
     {
-        // Remove the "SQE" prefix, then remove any dashes
-        $number = str_replace(['SQE', '-'], '', $code);
-        return (int) $number;
+        // Keep only the digits, regardless of prefix
+        return (int) preg_replace('/\D/', '', $code);
     }
 
     /**
      * Format a number as a locker code.
-     * Example: 1 -> "SQE01", 9 -> "SQE09", 11 -> "SQE11", 245 -> "SQE245"
+     * Example: 1 -> "SQECR01", 9 -> "SQECR09", 11 -> "SQECR11", 245 -> "SQECR245"
      *
      * @param int $number
      * @return string
      */
     private function formatLockerCode(int $number): string
     {
-        // Format as SQE + number, padded to 2 digits minimum
-        return 'SQE' . str_pad($number, 2, '0', STR_PAD_LEFT);
+        // Format as SQECR + number, padded to 2 digits minimum
+        return 'SQECR' . str_pad($number, 2, '0', STR_PAD_LEFT);
     }
 }
