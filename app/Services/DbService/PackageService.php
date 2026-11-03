@@ -3,9 +3,11 @@
 namespace App\Services\DbService;
 
 use App\Enums\PackageStatus;
+use App\Events\InvoiceReadyForDelivery;
 use App\Events\PackageDeletedByAdmin;
 use App\Events\PackageStatusChanged;
 use App\Events\PackageUpdatedByAdmin;
+use App\Models\Invoice;
 use App\Models\Package;
 use App\Models\PackageStatusHistory;
 use Illuminate\Support\Facades\DB;
@@ -93,6 +95,29 @@ class PackageService
 
         PackageStatusChanged::dispatch($package, $fromStatus->value, $toStatus->value);
 
+        if ($toStatus === PackageStatus::READY_TO_DELIVER) {
+            $this->dispatchInvoiceReadyIfComplete($package);
+        }
+    }
+
+    /**
+     * Notify once per invoice: only the transition that leaves no invoice
+     * package pending (everything ready or delivered) fires the event. Runs
+     * synchronously so bulk transitions don't fire it more than once.
+     */
+    private function dispatchInvoiceReadyIfComplete(Package $package): void
+    {
+        if ($package->invoice_id === null) {
+            return;
+        }
+
+        $hasPending = Package::where('invoice_id', $package->invoice_id)
+            ->whereNotIn('status', [PackageStatus::READY_TO_DELIVER->value, PackageStatus::DELIVERED->value])
+            ->exists();
+
+        if (! $hasPending) {
+            InvoiceReadyForDelivery::dispatch(Invoice::findOrFail($package->invoice_id));
+        }
     }
 
     /**
