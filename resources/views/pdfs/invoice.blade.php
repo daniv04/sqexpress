@@ -17,13 +17,15 @@
         .client-box table { width: 100%; border-collapse: collapse; }
         .client-box td { font-size: 12px; padding: 2px 0; }
         .client-box td:first-child { color: #6b7280; width: 120px; }
-        .items-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        .items-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; table-layout: fixed; }
         .items-table th { background-color: #1d4ed8; color: white; padding: 6px 10px; text-align: left; font-size: 11px; }
         .items-table th.right { text-align: right; }
         .items-table td { padding: 5px 10px; border-bottom: 1px solid #e5e7eb; font-size: 11px; vertical-align: middle; white-space: nowrap; }
         .items-table td.right { text-align: right; }
         .items-table tr:nth-child(even) { background-color: #f9fafb; }
         .items-table tr:last-child td { border-bottom: none; }
+        .items-table td.item-cell { white-space: normal; word-wrap: break-word; }
+        .item-description { color: #6b7280; font-size: 10px; margin-top: 2px; }
         .type-badge { display: inline-block; background-color: #dbeafe; color: #1d4ed8; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: bold; }
         .totals-table { width: 280px; margin-left: auto; border-collapse: collapse; margin-bottom: 20px; }
         .totals-table td { padding: 4px 8px; font-size: 12px; }
@@ -110,17 +112,22 @@
     <table class="items-table">
         <thead>
             <tr>
-                <th>Tracking</th>
-                <th>Tipo</th>
-                <th class="right" style="width: 90px;">Peso</th>
-                <th class="right" style="width: 110px;">Precio por unidad</th>
-                <th class="right" style="width: 110px;">Total</th>
+                <th style="width: 40%;">Tracking &amp; Descripción</th>
+                <th style="width: 18%;">Tipo</th>
+                <th class="right" style="width: 12%;">Peso</th>
+                <th class="right" style="width: 16%;">Precio por unidad</th>
+                <th class="right" style="width: 14%;">Total</th>
             </tr>
         </thead>
         <tbody>
             @foreach($invoice->packages as $package)
             <tr>
-                <td>{{ $package->tracking }}</td>
+                <td class="item-cell">
+                    {{ $package->tracking }}
+                    @if($package->description)
+                        <div class="item-description">{{ $package->description }}</div>
+                    @endif
+                </td>
                 <td><span class="type-badge">{{ $package->shippingMethod?->name ?? 'N/A' }}</span></td>
                 <td class="right">{{ $package->weight ? number_format($package->weight, 2) . ' ' . ($package->shippingMethod?->unitSuffix() ?? 'kg') : '—' }}</td>
                 <td class="right">${{ number_format($package->service_cost, 2) }}</td>
