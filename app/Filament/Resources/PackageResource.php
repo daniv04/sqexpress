@@ -15,6 +15,7 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\HtmlString;
 
@@ -326,7 +327,27 @@ class PackageResource extends Resource
 
                 Tables\Actions\ViewAction::make(),
             ])
-            ->bulkActions([]);
+            ->bulkActions([
+                Tables\Actions\BulkAction::make('marcar_listos')
+                    ->label('Pasar a Listo para Entregar')
+                    ->icon('heroicon-o-check-badge')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->modalHeading('Pasar paquetes a "Listo para Entregar"')
+                    ->modalDescription('Solo se moverán los paquetes seleccionados que estén en "Recibido en Oficina". Se notificará al cliente por correo.')
+                    ->modalSubmitActionLabel('Confirmar')
+                    ->deselectRecordsAfterCompletion()
+                    ->action(function (Collection $records): void {
+                        $moved = app(PackageService::class)->markPackagesAsReadyToDeliver($records, Auth::id());
+                        $skipped = $records->count() - $moved;
+
+                        Notification::make()
+                            ->title("{$moved} paquete(s) pasados a Listo para Entregar")
+                            ->body($skipped > 0 ? "{$skipped} paquete(s) omitidos por no estar en \"Recibido en Oficina\"." : null)
+                            ->success()
+                            ->send();
+                    }),
+            ]);
     }
 
     public static function getRelations(): array

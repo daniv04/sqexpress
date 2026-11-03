@@ -2,9 +2,11 @@
 
 namespace App\Filament\Resources\InvoiceResource\Pages;
 
+use App\Enums\PackageStatus;
 use App\Filament\Resources\InvoiceResource;
 use App\Models\Package;
 use App\Services\DbService\InvoiceService;
+use App\Services\DbService\PackageService;
 use Filament\Actions;
 use Filament\Forms;
 use Filament\Infolists;
@@ -14,6 +16,7 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Support\Enums\FontWeight;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 
 class ViewInvoice extends ViewRecord
 {
@@ -192,6 +195,24 @@ class ViewInvoice extends ViewRecord
                         ->send();
                 }),
 
+            Actions\Action::make('marcar_listos')
+                ->label('Marcar como listos para entregar')
+                ->icon('heroicon-o-check-badge')
+                ->color('info')
+                ->visible(fn (): bool => $this->receivedInBusinessPackages()->isNotEmpty())
+                ->requiresConfirmation()
+                ->modalHeading('Pasar paquetes a "Listo para Entregar"')
+                ->modalDescription(fn (): string => 'Se pasarán a "Listo para Entregar" los '.$this->receivedInBusinessPackages()->count().' paquete(s) de esta factura que están en "Recibido en Oficina" y se notificará por correo al cliente.')
+                ->modalSubmitActionLabel('Confirmar')
+                ->action(function () {
+                    $moved = app(PackageService::class)->markPackagesAsReadyToDeliver($this->receivedInBusinessPackages(), auth()->id());
+                    $this->record->load('packages');
+                    Notification::make()
+                        ->title("{$moved} paquete(s) pasados a Listo para Entregar")
+                        ->success()
+                        ->send();
+                }),
+
             Actions\Action::make('marcar_entregados')
                 ->label('Marcar como entregados')
                 ->icon('heroicon-o-truck')
@@ -209,6 +230,13 @@ class ViewInvoice extends ViewRecord
                         ->send();
                 }),
         ];
+    }
+
+    private function receivedInBusinessPackages(): Collection
+    {
+        return $this->record->packages
+            ->where('status', PackageStatus::RECEIVED_IN_BUSINESS->value)
+            ->values();
     }
 
     private function availablePackagesQuery(): Builder

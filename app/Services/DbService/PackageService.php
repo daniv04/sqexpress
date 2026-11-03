@@ -92,6 +92,35 @@ class PackageService
         });
 
         PackageStatusChanged::dispatch($package, $fromStatus->value, $toStatus->value);
+
+    }
+
+    /**
+     * Bulk-transitions "received in business" packages to "ready to deliver".
+     * Packages in any other status are skipped. Reuses updatePackageStatus so
+     * history and the status-change email fire per package.
+     *
+     * @param  iterable<Package>  $packages
+     * @return int Number of packages moved.
+     */
+    public function markPackagesAsReadyToDeliver(iterable $packages, ?int $changedBy = null): int
+    {
+        $moved = 0;
+
+        foreach ($packages as $package) {
+            if ($package->status !== PackageStatus::RECEIVED_IN_BUSINESS->value) {
+                continue;
+            }
+
+            $this->updatePackageStatus(
+                package: $package,
+                newStatus: PackageStatus::READY_TO_DELIVER->value,
+                changedBy: $changedBy,
+            );
+            $moved++;
+        }
+
+        return $moved;
     }
 
     /**
