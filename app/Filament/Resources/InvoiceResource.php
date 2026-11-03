@@ -13,7 +13,9 @@ use Filament\Tables;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
+use DomainException;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
 
 class InvoiceResource extends Resource
@@ -148,7 +150,42 @@ class InvoiceResource extends Resource
                             ->send();
                     }),
             ])
-            ->bulkActions([]);
+            ->bulkActions([
+                Tables\Actions\BulkAction::make('marcar_entregadas')
+                    ->label('Marcar como entregadas')
+                    ->icon('heroicon-o-truck')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->modalHeading('Marcar facturas como entregadas')
+                    ->modalDescription('Se marcarán como entregados todos los paquetes de las facturas seleccionadas y se notificará por correo a cada cliente.')
+                    ->modalSubmitActionLabel('Confirmar')
+                    ->deselectRecordsAfterCompletion()
+                    ->action(function (Collection $records): void {
+                        $service = app(InvoiceService::class);
+                        $delivered = 0;
+                        $failed = [];
+
+                        foreach ($records->load('packages') as $invoice) {
+                            if ($invoice->isFullyDelivered()) {
+                                continue;
+                            }
+
+                            try {
+                                $service->markPackagesAsDelivered($invoice, Auth::id());
+                                $delivered++;
+                            } catch (DomainException $e) {
+                                $failed[] = $invoice->invoice_number;
+                            }
+                        }
+
+                        Notification::make()
+                            ->title("{$delivered} factura(s) marcadas como entregadas")
+                            ->body($failed ? 'No se pudieron entregar completamente: '.implode(', ', $failed).'.' : null)
+                            ->color($failed ? 'warning' : 'success')
+                            ->icon($failed ? 'heroicon-o-exclamation-triangle' : 'heroicon-o-check-circle')
+                            ->send();
+                    }),
+            ]);
     }
 
     public static function getRelations(): array
