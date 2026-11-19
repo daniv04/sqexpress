@@ -14,6 +14,7 @@ class ShippingMethod extends Model
         'active',
         'pais',
         'direccion',
+        'direccion_alternativa',
         'estado',
         'ciudad',
         'telefono',

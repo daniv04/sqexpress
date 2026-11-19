@@ -85,6 +85,12 @@ class ShippingMethodResource extends Resource
 
                         Forms\Components\TextInput::make('codigo_postal')
                             ->label('Código Postal'),
+
+                        Forms\Components\Textarea::make('direccion_alternativa')
+                            ->label('Dirección alternativa')
+                            ->rows(4)
+                            ->helperText('Opcional. Se muestra al cliente tal como se escribe, respetando los saltos de línea.')
+                            ->columnSpanFull(),
                     ]),
             ]);
     }
