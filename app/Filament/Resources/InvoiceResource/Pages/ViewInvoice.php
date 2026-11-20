@@ -195,6 +195,101 @@ class ViewInvoice extends ViewRecord
                         ->send();
                 }),
 
+            Actions\Action::make('editar_pesos')
+                ->label('Editar pesos')
+                ->icon('heroicon-o-scale')
+                ->color('warning')
+                ->visible(fn (): bool => $this->record->canAddPackages())
+                ->modalHeading('Editar pesos de la factura')
+                ->modalDescription('Los costos y totales se recalcularán con el mismo tipo de cambio y la factura corregida se reenviará al cliente por correo.')
+                ->modalSubmitActionLabel('Guardar y reenviar')
+                ->fillForm(fn (): array => [
+                    'package_weights' => $this->editablePackages()
+                        ->map(fn (Package $p): array => [
+                            'id' => $p->id,
+                            'tracking' => $p->tracking,
+                            'weight' => $p->weight,
+                            'service_cost' => $p->service_cost,
+                            'unit_suffix' => $p->shippingMethod?->unitSuffix() ?? 'kg',
+                        ])
+                        ->values()
+                        ->all(),
+                ])
+                ->form([
+                    Forms\Components\Repeater::make('package_weights')
+                        ->label('Peso de cada paquete')
+                        ->addable(false)
+                        ->deletable(false)
+                        ->reorderable(false)
+                        ->schema([
+                            Forms\Components\Hidden::make('id'),
+
+                            Forms\Components\Hidden::make('unit_suffix'),
+
+                            Forms\Components\TextInput::make('tracking')
+                                ->label('Tracking')
+                                ->disabled()
+                                ->dehydrated(false),
+
+                            Forms\Components\TextInput::make('weight')
+                                ->label('Cantidad')
+                                ->suffix(fn (Forms\Get $get) => $get('unit_suffix') ?? 'kg')
+                                ->numeric()
+                                ->minValue(0.01)
+                                ->required()
+                                ->live(onBlur: true)
+                                ->afterStateUpdated(function (Forms\Set $set, Forms\Get $get, $state) {
+                                    $package = Package::with('shippingMethod')->find($get('id'));
+                                    $price = (float) ($package?->shippingMethod->price_per_unit ?? 0);
+                                    $set('service_cost', ($state && $price > 0) ? round($state * $price, 2) : 0);
+                                }),
+
+                            Forms\Components\TextInput::make('service_cost')
+                                ->label('Costo (USD)')
+                                ->numeric()
+                                ->readOnly()
+                                ->dehydrated(false),
+                        ])
+                        ->columns(3),
+
+                    Forms\Components\Placeholder::make('totals_preview')
+                        ->label('Resumen')
+                        ->content(function (Forms\Get $get): string {
+                            $invoice = $this->record;
+                            $edited = collect($get('package_weights') ?? [])->keyBy('id');
+                            $subtotal = $invoice->packages->sum(fn (Package $p): float => (float) ($edited[$p->id]['service_cost'] ?? $p->service_cost));
+                            $new = app(InvoiceService::class)->recalculatedTotals($invoice, $subtotal);
+
+                            $line = 'Total: $'.number_format((float) $invoice->total, 2).' → $'.number_format($new['total'], 2);
+                            if ($new['total_crc'] !== null) {
+                                $line .= ' · ₡'.number_format((float) $invoice->total_crc, 2).' → ₡'.number_format($new['total_crc'], 2);
+                            }
+
+                            return $line.' · Puntos: '.$invoice->points_earned.' → '.$new['points_earned'];
+                        }),
+                ])
+                ->action(function (array $data) {
+                    $weights = collect($data['package_weights'] ?? [])
+                        ->filter(fn (array $item): bool => filled($item['id'] ?? null))
+                        ->mapWithKeys(fn (array $item): array => [(int) $item['id'] => (float) ($item['weight'] ?? 0)])
+                        ->all();
+
+                    try {
+                        app(InvoiceService::class)->updatePackageWeights($this->record, $weights);
+                    } catch (\RuntimeException $e) {
+                        Notification::make()->title($e->getMessage())->danger()->send();
+
+                        return;
+                    }
+
+                    $this->record->refresh()->load('packages');
+
+                    Notification::make()
+                        ->title('Pesos actualizados y factura reenviada')
+                        ->success()
+                        ->send();
+                }),
+
             Actions\Action::make('marcar_listos')
                 ->label('Marcar como listos para entregar')
                 ->icon('heroicon-o-check-badge')
@@ -237,6 +332,15 @@ class ViewInvoice extends ViewRecord
         return $this->record->packages
             ->where('status', PackageStatus::RECEIVED_IN_BUSINESS->value)
             ->values();
+    }
+
+    private function editablePackages(): Collection
+    {
+        return $this->record->packages()
+            ->with('shippingMethod')
+            ->where('status', '!=', PackageStatus::CANCELED->value)
+            ->orderBy('id')
+            ->get();
     }
 
     private function availablePackagesQuery(): Builder

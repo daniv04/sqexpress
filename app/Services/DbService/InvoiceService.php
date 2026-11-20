@@ -212,6 +212,54 @@ class InvoiceService
         return $invoice;
     }
 
+    /**
+     * Correct package weights on an unpaid, not fully delivered invoice,
+     * recompute each cost from its shipping method, recalculate the totals
+     * and resend it. The client's points move by the delta only, never
+     * below zero. Weights for packages outside the invoice are ignored.
+     *
+     * @param  array<int, float|int|string>  $weights  package id => new weight
+     */
+    public function updatePackageWeights(Invoice $invoice, array $weights): Invoice
+    {
+        $invoice = DB::transaction(function () use ($invoice, $weights): Invoice {
+            $invoice = Invoice::with('packages.shippingMethod')->lockForUpdate()->findOrFail($invoice->id);
+
+            if (! $invoice->canAddPackages()) {
+                throw new \RuntimeException('La factura ya está cancelada o entregada.');
+            }
+
+            foreach ($invoice->packages as $package) {
+                $weight = (float) ($weights[$package->id] ?? 0);
+                if ($weight <= 0) {
+                    continue;
+                }
+
+                $price = (float) ($package->shippingMethod->price_per_unit ?? 0);
+                $package->update([
+                    'weight' => $weight,
+                    'service_cost' => $price > 0 ? round($weight * $price, 2) : $package->service_cost,
+                ]);
+            }
+
+            $totals = $this->recalculatedTotals($invoice, (float) $invoice->packages->sum('service_cost'));
+            $pointsDelta = $totals['points_earned'] - $invoice->points_earned;
+
+            $invoice->update($totals);
+
+            if ($pointsDelta !== 0) {
+                $user = $invoice->user()->lockForUpdate()->first();
+                $user->update(['loyalty_points' => max(0, $user->loyalty_points + $pointsDelta)]);
+            }
+
+            return $invoice;
+        });
+
+        InvoiceGenerated::dispatch($invoice);
+
+        return $invoice;
+    }
+
     public function resendInvoice(Invoice $invoice): void
     {
         InvoiceGenerated::dispatch($invoice);
