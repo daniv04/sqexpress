@@ -43,7 +43,7 @@
             <td style="width: 50%;">
                 @php $logoPath = public_path('images/logo_sqexpress_noback.png'); @endphp
                 @if(file_exists($logoPath))
-                    <img src="{{ $logoPath }}" alt="SQ EXPRESS CR" style="height: 110px; margin-bottom: 8px;"><br>
+                    <img src="data:image/png;base64,{{ base64_encode(file_get_contents($logoPath)) }}" alt="SQ EXPRESS CR" style="height: 110px; margin-bottom: 8px;"><br>
                 @endif
                 <div class="company-name">SQ EXPRESS CR</div>
                 <div class="company-info">
