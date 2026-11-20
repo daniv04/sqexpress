@@ -229,15 +229,16 @@ class InvoiceService
 
     /**
      * Bulk-transitions every non-delivered package in the invoice to
-     * "delivered". Reuses PackageService::updatePackageStatus so the usual
-     * status-change email fires per package, same as the manual path.
+     * "delivered", skipping canceled ones (a final state). Reuses
+     * PackageService::updatePackageStatus so the usual status-change email
+     * fires per package, same as the manual path.
      */
     public function markPackagesAsDelivered(Invoice $invoice, ?int $changedBy = null): void
     {
         $invoice->loadMissing('packages');
 
         foreach ($invoice->packages as $package) {
-            if ($package->status === PackageStatus::DELIVERED->value) {
+            if (in_array($package->status, [PackageStatus::DELIVERED->value, PackageStatus::CANCELED->value], true)) {
                 continue;
             }
 

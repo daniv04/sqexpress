@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Events\PackageStatusChanged;
 use App\Filament\Resources\InvoiceResource\Pages\ListInvoices;
+use App\Filament\Resources\InvoiceResource\Pages\ViewInvoice;
 use App\Models\Invoice;
 use App\Models\Package;
 use App\Models\PackageStatusHistory;
@@ -90,8 +91,8 @@ class BulkMarkInvoicesDeliveredTest extends TestCase
         Event::fake([PackageStatusChanged::class]);
 
         $admin = User::factory()->create(['role' => 'admin']);
-        // A canceled package cannot transition to delivered.
-        $broken = $this->createInvoiceWithPackages(['canceled']);
+        // A prealerted package cannot transition to delivered.
+        $broken = $this->createInvoiceWithPackages(['prealerted']);
         $ok = $this->createInvoiceWithPackages(['ready_to_deliver']);
 
         $this->actingAs($admin);
@@ -101,6 +102,47 @@ class BulkMarkInvoicesDeliveredTest extends TestCase
             ->assertHasNoTableBulkActionErrors();
 
         $this->assertTrue($ok->fresh()->isFullyDelivered());
-        $this->assertSame('canceled', $broken->packages()->first()->status);
+        $this->assertSame('prealerted', $broken->packages()->first()->status);
+    }
+
+    public function test_view_action_skips_canceled_packages_when_marking_delivered(): void
+    {
+        Event::fake([PackageStatusChanged::class]);
+
+        $admin = User::factory()->create(['role' => 'admin']);
+        $invoice = $this->createInvoiceWithPackages(['canceled', 'ready_to_deliver']);
+
+        $this->actingAs($admin);
+
+        Livewire::test(ViewInvoice::class, ['record' => $invoice->getRouteKey()])
+            ->callAction('marcar_entregados')
+            ->assertHasNoActionErrors();
+
+        $statuses = $invoice->packages()->orderBy('id')->pluck('status')->all();
+        $this->assertSame(['canceled', 'delivered'], $statuses);
+        Event::assertDispatchedTimes(PackageStatusChanged::class, 1);
+        $this->assertTrue($invoice->fresh()->isFullyDelivered());
+    }
+
+    public function test_invoice_with_delivered_and_canceled_packages_counts_as_fully_delivered(): void
+    {
+        $mixed = $this->createInvoiceWithPackages(['delivered', 'canceled']);
+        $allCanceled = $this->createInvoiceWithPackages(['canceled']);
+        $pending = $this->createInvoiceWithPackages(['delivered', 'ready_to_deliver']);
+        $delivered = $this->createInvoiceWithPackages(['delivered']);
+
+        $this->assertTrue($mixed->isFullyDelivered());
+        $this->assertFalse($allCanceled->isFullyDelivered());
+        $this->assertFalse($pending->isFullyDelivered());
+        $this->assertTrue($delivered->isFullyDelivered());
+
+        $this->assertEqualsCanonicalizing(
+            [$mixed->id, $delivered->id],
+            Invoice::fullyDelivered()->pluck('id')->all(),
+        );
+        $this->assertEqualsCanonicalizing(
+            [$allCanceled->id, $pending->id],
+            Invoice::notFullyDelivered()->pluck('id')->all(),
+        );
     }
 }

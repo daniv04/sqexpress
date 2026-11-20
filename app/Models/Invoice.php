@@ -53,10 +53,22 @@ class Invoice extends Model
         return $this->paid_at !== null;
     }
 
+    /**
+     * Fully delivered once every package is delivered or canceled (both
+     * final states) and at least one was actually delivered.
+     */
     public function isFullyDelivered(): bool
     {
-        return $this->packages->isNotEmpty()
-            && $this->packages->every(fn (Package $package): bool => $package->status === PackageStatus::DELIVERED->value);
+        return $this->packages->contains('status', PackageStatus::DELIVERED->value)
+            && $this->packages->every(fn (Package $package): bool => in_array($package->status, self::closedPackageStatuses(), true));
+    }
+
+    /**
+     * @return list<string>
+     */
+    private static function closedPackageStatuses(): array
+    {
+        return [PackageStatus::DELIVERED->value, PackageStatus::CANCELED->value];
     }
 
     public function canAddPackages(): bool
@@ -64,14 +76,25 @@ class Invoice extends Model
         return ! $this->isPaid() && ! $this->isFullyDelivered();
     }
 
+    /**
+     * Invoices without packages keep their previous tab ("delivered").
+     */
     public function scopeFullyDelivered(Builder $query): Builder
     {
-        return $query->whereDoesntHave('packages', fn ($q) => $q->where('status', '!=', PackageStatus::DELIVERED->value));
+        return $query
+            ->whereDoesntHave('packages', fn ($q) => $q->whereNotIn('status', self::closedPackageStatuses()))
+            ->where(fn ($q) => $q
+                ->whereHas('packages', fn ($p) => $p->where('status', PackageStatus::DELIVERED->value))
+                ->orWhereDoesntHave('packages'));
     }
 
     public function scopeNotFullyDelivered(Builder $query): Builder
     {
-        return $query->whereHas('packages', fn ($q) => $q->where('status', '!=', PackageStatus::DELIVERED->value));
+        return $query->where(fn ($q) => $q
+            ->whereHas('packages', fn ($p) => $p->whereNotIn('status', self::closedPackageStatuses()))
+            ->orWhere(fn ($q) => $q
+                ->whereHas('packages')
+                ->whereDoesntHave('packages', fn ($p) => $p->where('status', PackageStatus::DELIVERED->value))));
     }
 
     public function user(): BelongsTo
